@@ -202,6 +202,18 @@ void shareFileAndroid(const std::string &path)
 	jnienv->CallVoidMethod(activity, url_open, jurl);
 }
 
+void setPlayingNowNotification(bool show)
+{
+	jmethodID play_notification = jnienv->GetMethodID(nativeActivity,
+			"setPlayingNowNotification", "(Z)V");
+
+	FATAL_ERROR_IF(play_notification == nullptr,
+			"porting::setPlayingNowNotification unable to find Java setPlayingNowNotification method");
+
+	jboolean jshow = show;
+	jnienv->CallVoidMethod(app_global->activity->clazz, play_notification, jshow);
+}
+
 AndroidDialogType getLastInputDialogType()
 {
 	jmethodID lastdialogtype = jnienv->GetMethodID(activityClass,
