@@ -383,7 +383,6 @@ class GameGlobalShaderConstantSetter : public IShaderConstantSetter
 		m_animation_timer_delta_pixel{"animationTimerDelta"};
 	CachedPixelShaderSetting<float, 3> m_day_light{"dayLight"};
 	CachedPixelShaderSetting<float, 1> m_ambient_light{"ambientLight"};
-	CachedPixelShaderSetting<float, 3> m_ambient_color{"ambientColor"};
 	CachedPixelShaderSetting<float, 3> m_minimap_yaw{"yawVec"};
 	CachedPixelShaderSetting<float, 3> m_camera_offset_pixel{"cameraOffset"};
 	CachedVertexShaderSetting<float, 3> m_camera_offset_vertex{"cameraOffset"};
@@ -475,20 +474,15 @@ public:
 		get_sunlight_color(&sunlight, daynight_ratio);
 		m_day_light.set(sunlight, services);
 
-		auto lighting = m_client->getEnv().getLocalPlayer()->getLighting();
+		auto ambient_light = m_client->getEnv().getAmbientLight();
 
-		float ambient_light = lighting.ambient_light.luminance / 16.f;
-
-		m_ambient_light.set(&ambient_light, services);
-
-		video::SColor ambient_color = lighting.ambient_light.color;
-
-		float ac_f[3] = {
-			ambient_color.getRed()/255.f,
-			ambient_color.getGreen()/255.f,
-			ambient_color.getBlue()/255.f
+		float ambient_light_f[3] = {
+			ambient_light.getRed() / 255.f,
+			ambient_light.getGreen() / 255.f,
+			ambient_light.getBlue() / 255.f
 		};
-		m_ambient_color.set(ac_f, services);
+
+		m_ambient_light.set(ambient_light_f, services);
 
 		u32 animation_timer = m_client->getEnv().getFrameTime() % 1000000;
 		float animation_timer_f = (float)animation_timer / 100000.f;
@@ -3542,7 +3536,7 @@ PointedThing Game::updatePointedThing(
 
 		u32 daynight_ratio = client->getEnv().getDayNightRatio();
 		video::SColor c;
-		final_color_blend(&c, light_level, daynight_ratio);
+		final_color_blend(&c, light_level, daynight_ratio, client->getEnv().getAmbientLight());
 
 		// Modify final color a bit with time
 		u32 timer = client->getEnv().getFrameTime() % 5000;
