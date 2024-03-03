@@ -183,6 +183,15 @@ public:
 	v3f eye_offset_third;
 	v3f eye_offset_third_front;
 
+	void set_camera_roll(f32 roll)
+	{
+		m_camera_roll = roll;
+	}
+	f32 get_camera_roll() const
+	{
+		return m_camera_roll;
+	}
+
 	Inventory inventory;
 
 	f32 movement_acceleration_default;
@@ -247,4 +256,6 @@ private:
 	// and ServerThread
 	std::mutex m_mutex;
 	PlayerSettings m_player_settings;
+	
+	f32 m_camera_roll = 0.0f;
 };
