@@ -114,8 +114,6 @@ public:
 
 	void onSettingChanged(const std::string &name);
 
-	void forceUpdateLightColor() { m_force_update_light_color = true; }
-
 protected:
 	// use drop() instead
 	virtual ~ClientMap();
@@ -197,6 +195,4 @@ private:
 
 	bool m_loops_occlusion_culler;
 	bool m_enable_raytraced_culling;
-
-	bool m_force_update_light_color = false;
 };
