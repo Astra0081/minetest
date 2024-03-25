@@ -189,7 +189,7 @@ return {
 
 	cbf_button_handler = function(this, fields, name, tabdata)
 		if fields.share_debug then
-			local path = core.get_user_path() .. DIR_DELIM .. "debug.txt"
+			local path = core.get_user_path() .. "/debug.txt"
 			core.share_file(path)
 		end
 
