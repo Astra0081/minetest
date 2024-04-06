@@ -474,7 +474,9 @@ public:
 		get_sunlight_color(&sunlight, daynight_ratio);
 		m_day_light.set(sunlight, services);
 
-		video::SColorf ambient_light_f(m_client->getEnv().getAmbientLight());
+		auto lighting = m_client->getEnv().getLocalPlayer()->getLighting();
+
+		video::SColorf ambient_light_f(lighting.ambient_light);
 		m_ambient_light.set(ambient_light_f, services);
 
 		u32 animation_timer = m_client->getEnv().getFrameTime() % 1000000;
@@ -507,8 +509,6 @@ public:
 
 		m_texel_size0_vertex.set(m_texel_size0, services);
 		m_texel_size0_pixel.set(m_texel_size0, services);
-
-		auto lighting = m_client->getEnv().getLocalPlayer()->getLighting();
 
 		const AutoExposure &exposure_params = lighting.exposure;
 		std::array<float, 7> exposure_buffer = {
@@ -1448,7 +1448,7 @@ void Game::copyServerClientCache()
 {
 	// It would be possible to let the client directly read the media files
 	// from where the server knows they are. But aside from being more complicated
-	// it would also *not* fill the media cache and cause slower joining of 
+	// it would also *not* fill the media cache and cause slower joining of
 	// remote servers.
 	// (Imagine that you launch a game once locally and then connect to a server.)
 

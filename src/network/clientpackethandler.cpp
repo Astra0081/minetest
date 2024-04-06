@@ -1826,5 +1826,4 @@ void Client::handleCommand_SetLighting(NetworkPacket *pkt)
 	if (pkt->getRemainingBytes() < 4)
 		return;
 	*pkt >> lighting.ambient_light;
-	lighting.ambient_light.setAlpha(255); // alpha should always be 255
 }

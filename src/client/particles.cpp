@@ -35,6 +35,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "client.h"
 #include "settings.h"
 #include "profiler.h"
+#include "client/mapblock_mesh.h"
 
 ClientParticleTexture::ClientParticleTexture(const ServerParticleTexture& p, ITextureSource *tsrc)
 {
@@ -186,10 +187,15 @@ video::SColor Particle::updateLight(ClientEnvironment *env)
 		light = blend_light(env->getDayNightRatio(), LIGHT_SUN, 0);
 
 	u8 m_light = decode_light(light + m_p.glow);
+
+	video::SColor light_color{0xFFFFFFFF};
+
+	final_color_blend(&light_color, m_light, env->getDayNightRatio(),
+			env->getLocalPlayer()->getLighting().ambient_light);
 	return video::SColor(255,
-		m_light * m_base_color.getRed() / 255,
-		m_light * m_base_color.getGreen() / 255,
-		m_light * m_base_color.getBlue() / 255);
+		light_color.getRed() * m_base_color.getRed() / 255,
+		light_color.getGreen() * m_base_color.getGreen() / 255,
+		light_color.getBlue() * m_base_color.getBlue() / 255);
 }
 
 void Particle::updateVertices(ClientEnvironment *env, video::SColor color)
