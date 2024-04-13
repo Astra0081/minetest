@@ -24,6 +24,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "gui/mainmenumanager.h"
 #include "gui/touchcontrols.h"
 #include "hud.h"
+#include "client/renderingengine.h"
 
 void KeyCache::populate_nonchanging()
 {
@@ -140,6 +141,11 @@ bool MyEventReceiver::OnEvent(const SEvent &event)
 			return true;
 		}
 	}
+
+	if (event.EventType == EET_MOUSE_INPUT_EVENT && !event.MouseInput.Simulated)
+		last_pointer_type = PointerType::Mouse;
+	else if (event.EventType == EET_TOUCH_INPUT_EVENT)
+		last_pointer_type = PointerType::Touch;
 
 	// Let the menu handle events, if one is active.
 	if (isMenuActive()) {
@@ -263,6 +269,26 @@ float RealInputHandler::getMovementDirection()
 	else if (g_touchcontrols && g_touchcontrols->getMovementSpeed())
 		return g_touchcontrols->getMovementDirection();
 	return joystick.getMovementDirection();
+}
+
+v2s32 RealInputHandler::getMousePos()
+{
+	auto control = RenderingEngine::get_raw_device()->getCursorControl();
+	if (control) {
+		return control->getPosition();
+	}
+
+	return m_mousepos;
+}
+
+void RealInputHandler::setMousePos(s32 x, s32 y)
+{
+	auto control = RenderingEngine::get_raw_device()->getCursorControl();
+	if (control) {
+		control->setPosition(x, y);
+	} else {
+		m_mousepos = v2s32(x, y);
+	}
 }
 
 /*

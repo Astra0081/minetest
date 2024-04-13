@@ -413,6 +413,11 @@ TouchControls::TouchControls(IrrlichtDevice *device, ISimpleTextureSource *tsrc)
 	}
 }
 
+TouchControls::~TouchControls()
+{
+	releaseAll();
+}
+
 void TouchControls::addButton(std::vector<button_info> &buttons, touch_gui_button_id id,
 		const std::string &image, const recti &rect, bool visible)
 {
@@ -852,6 +857,7 @@ void TouchControls::emitMouseEvent(EMOUSE_INPUT_EVENT type)
 	event.MouseInput.Control      = false;
 	event.MouseInput.ButtonStates = 0;
 	event.MouseInput.Event        = type;
+	event.MouseInput.Simulated    = true;
 	m_receiver->OnEvent(event);
 }
 
