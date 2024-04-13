@@ -329,7 +329,7 @@ void final_color_blend(video::SColor *result,
  */
 void final_color_blend(video::SColor *result,
 		const video::SColor &data, const video::SColorf &dayLight,
-		const video::SColor &ambientLight=video::SColor(255,0,0,0));
+		video::SColor ambientLight=video::SColor(255,0,0,0));
 
 // Retrieves the TileSpec of a face of a node
 // Adds MATERIAL_FLAG_CRACK if the node is cracked

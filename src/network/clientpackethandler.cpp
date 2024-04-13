@@ -47,7 +47,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "skyparams.h"
 #include "particles.h"
 #include <memory>
-#include "client/clientmap.h"
 
 void Client::handleCommand_Deprecated(NetworkPacket* pkt)
 {

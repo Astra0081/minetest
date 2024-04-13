@@ -300,7 +300,7 @@ void final_color_blend(video::SColor *result,
 
 void final_color_blend(video::SColor *result,
 		const video::SColor &data, const video::SColorf &dayLight,
-		const video::SColor &ambientLight)
+		video::SColor ambientLight)
 {
 	static const video::SColorf artificialColor(1.04f, 1.04f, 1.04f);
 
@@ -813,7 +813,8 @@ MapBlockMesh::~MapBlockMesh()
 		delete block;
 }
 
-bool MapBlockMesh::animate(bool faraway, float time, int crack, u32 daynight_ratio)
+bool MapBlockMesh::animate(bool faraway, float time, int crack,
+		u32 daynight_ratio)
 {
 	if (!m_has_animation) {
 		m_animation_force_timer = 100000;
@@ -884,7 +885,8 @@ bool MapBlockMesh::animate(bool faraway, float time, int crack, u32 daynight_rat
 				getMeshBuffer(daynight_diff.first.second);
 			video::S3DVertex *vertices = (video::S3DVertex *)buf->getVertices();
 			for (const auto &j : daynight_diff.second)
-				final_color_blend(&(vertices[j.first].Color), j.second, day_color);
+				final_color_blend(&(vertices[j.first].Color), j.second,
+								day_color);
 		}
 		m_last_daynight_ratio = daynight_ratio;
 	}
@@ -958,10 +960,8 @@ video::SColor encode_light(u16 light, u8 emissive_light)
 	// Get components
 	u32 day = (light & 0xff);
 	u32 night = (light >> 8);
-
 	// Add emissive light
 	night += emissive_light * 2.5f;
-
 	if (night > 255)
 		night = 255;
 	// Since we don't know if the day light is sunlight or

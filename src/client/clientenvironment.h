@@ -149,6 +149,7 @@ public:
 	void updateFrameTime(bool is_paused);
 	u64 getFrameTime() const { return m_frame_time; }
 	u64 getFrameTimeDelta() const { return m_frame_dtime; }
+
 private:
 	ClientMap *m_map;
 	LocalPlayer *m_local_player = nullptr;
