@@ -212,14 +212,18 @@ SubgameSpec findSubgame(const std::string &id)
 	if (conf.exists("release"))
 		game_release = conf.getS32("release");
 
+	std::string gameid_alias;
+	if (conf.exists("gameid_alias"))
+		gameid_alias = conf.get("gameid_alias");
+
 	std::string menuicon_path;
 #ifndef SERVER
 	menuicon_path = getImagePath(
 			game_path + DIR_DELIM + "menu" + DIR_DELIM + "icon.png");
 #endif
 
-	SubgameSpec spec(idv, game_path, gamemod_path, mods_paths, game_title,
-			menuicon_path, game_author, game_release);
+	SubgameSpec spec(id, game_path, gamemod_path, mods_paths, game_title,
+			menuicon_path, game_author, game_release, gameid_alias);
 
 	if (conf.exists("name") && !conf.exists("title"))
 		spec.deprecation_msgs.push_back("\"name\" setting in game.conf is deprecated, please use \"title\" instead");

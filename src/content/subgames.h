@@ -34,6 +34,7 @@ struct SubgameSpec
 	int release;
 	std::string path;
 	std::string gamemods_path;
+	std::string gameid_alias;
 
 	/**
 	 * Map from virtual path to mods path
@@ -49,11 +50,12 @@ struct SubgameSpec
 			const std::unordered_map<std::string, std::string> &addon_mods_paths = {},
 			const std::string &title = "",
 			const std::string &menuicon_path = "",
-			const std::string &author = "", int release = 0) :
+			const std::string &author = "", int release = 0,
+			const std::string &gameid_alias = "") :
 			id(id),
 			title(title), author(author), release(release), path(path),
 			gamemods_path(gamemods_path), addon_mods_paths(addon_mods_paths),
-			menuicon_path(menuicon_path)
+			menuicon_path(menuicon_path), gameid_alias(gameid_alias)
 	{
 	}
 
