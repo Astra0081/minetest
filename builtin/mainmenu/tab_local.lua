@@ -357,6 +357,23 @@ local function main_button_handler(this, fields, name, tabdata)
 		local game_obj
 		if world then
 			game_obj = pkgmgr.find_by_gameid(world.gameid)
+			if not game_obj then
+				local games = pkgmgr.games
+				for i=1, #games do
+					local aliases = games[i].aliases:split()
+					for _, alias in pairs(aliases) do
+						alias = alias:trim()
+						if alias == world.gameid then
+							game_obj = games[i]
+							world.gameid = games[i].id
+							break
+						end
+					end
+					if game_obj then
+						break
+					end
+				end
+			end
 			core.settings:set("menu_last_game", game_obj.id)
 		end
 
