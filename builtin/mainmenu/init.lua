@@ -78,6 +78,14 @@ local function init_globals()
 		end,
 		-- Filter function
 		function(element, gameid)
+			local gameconfig = Settings(pkgmgr.find_by_gameid(gameid).path .. "/game.conf")
+			local aliases = (gameconfig:get("gameid_alias") or ""):split()
+			for _, alias in pairs(aliases) do
+				alias = alias:trim()
+				if element.gameid == alias then
+					return true
+				end
+			end
 			return element.gameid == gameid
 		end
 	)
