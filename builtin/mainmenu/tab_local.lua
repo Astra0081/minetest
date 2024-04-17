@@ -367,6 +367,23 @@ local function main_button_handler(this, fields, name, tabdata)
 							game_obj = games[i]
 							world.gameid = games[i].id
 							break
+						else
+							local el_id_len = #world.gameid
+							if el_id_len > 5 and world.gameid:sub(el_id_len - 4) == "_game" then
+								if world.gameid:sub(1, el_id_len - 5) == alias then
+									game_obj = games[i]
+									world.gameid = games[i].id
+									break
+								end
+							end
+							local alias_len = #alias
+							if alias_len > 5 and alias:sub(alias_len - 4) == "_game" then
+								if world.gameid == alias:sub(1, alias_len - 5) then
+									game_obj = games[i]
+									world.gameid = games[i].id
+									break
+								end
+							end
 						end
 					end
 					if game_obj then

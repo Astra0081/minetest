@@ -87,6 +87,19 @@ local function init_globals()
 				alias = alias:trim()
 				if element.gameid == alias then
 					return true
+				else
+					local el_id_len = #element.gameid
+					if el_id_len > 5 and element.gameid:sub(el_id_len - 4) == "_game" then
+						if element.gameid:sub(1, el_id_len - 5) == alias then
+							return true
+						end
+					end
+					local alias_len = #alias
+					if alias_len > 5 and alias:sub(alias_len - 4) == "_game" then
+						if element.gameid == alias:sub(1, alias_len - 5) then
+							return true
+						end
+					end
 				end
 			end
 			return false
