@@ -175,18 +175,14 @@ SubgameSpec findSubgame(const std::string &id)
 							found_alias();
 							break;
 						// Make sure a "_game" suffix is ignored
-						} else if (str_ends_with(alias, "_game")) {
-							std::string_view alias_trimmed{alias.data(), alias.size() - 5};
-							if (alias_trimmed == id) {
+						} else if (str_ends_with(alias, "_game")
+							&& alias.substr(0, alias.size() - 5) == id) {
 								found_alias();
 								break;
-							}
-						} else if (str_ends_with(id, "_game")) {
-							std::string_view id_trimmed{id.data(), id.size() - 5};
-							if (id_trimmed == alias) {
+						} else if (str_ends_with(id, "_game")
+							&& id.substr(0, id.size() - 5) == alias) {
 								found_alias();
 								break;
-							}
 						}
 					}
 				}
