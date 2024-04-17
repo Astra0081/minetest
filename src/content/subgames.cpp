@@ -163,28 +163,28 @@ SubgameSpec findSubgame(const std::string &id)
 
 				if (conf.exists("gameid_alias")) {
 					std::vector<std::string> aliases = str_split(conf.get("gameid_alias"), ',');
-					for (const std::string &alias : aliases) {
-						// Try direct matching with the alias
-						if (alias == id) {
+					for (const std::string &alias_raw : aliases) {
+						std::string_view alias = trim(alias_raw);
+						auto found_alias = [&](){
 							idv = dln.name;
 							game_path = path + DIR_DELIM + dln.name;
 							user_game = gamespath.user_specific;
+						};
+						// Try direct matching with the alias
+						if (alias == id) {
+							found_alias();
 							break;
 						// Make sure a "_game" suffix is ignored
-						} else if (str_ends_with(id, "_game")) {
-							std::string_view id_trimmed{id.c_str(), id.size() - 5};
-							if (id_trimmed == alias) {
-								idv = dln.name;
-								game_path = path + DIR_DELIM + dln.name;
-								user_game = gamespath.user_specific;
+						} else if (str_ends_with(alias, "_game")) {
+							std::string_view alias_trimmed{alias.data(), alias.size() - 5};
+							if (alias_trimmed == id) {
+								found_alias();
 								break;
 							}
-						} else if (str_ends_with(alias, "_game")) {
-							std::string_view alias_trimmed{alias.c_str(), alias.size() - 5};
-							if (alias_trimmed == id) {
-								idv = dln.name;
-								game_path = path + DIR_DELIM + dln.name;
-								user_game = gamespath.user_specific;
+						} else if (str_ends_with(id, "_game")) {
+							std::string_view id_trimmed{id.data(), id.size() - 5};
+							if (id_trimmed == alias) {
+								found_alias();
 								break;
 							}
 						}
