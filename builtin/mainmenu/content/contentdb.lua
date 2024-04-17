@@ -93,11 +93,27 @@ local function start_install(package, reason)
 		if result.msg then
 			gamedata.errormessage = result.msg
 		else
+			local delete_old_dir
+			if package.path then
+				local path_array = package.path:split(DIR_DELIM)
+				local name = path_array[#path_array]
+				local name_len = #name
+				if name_len > 5 and name:sub(-5) == "_game" then
+					name = name:sub(1, name_len - 5)
+				end
+				if name ~= package.name then
+					delete_old_dir = package.path
+					package.path = core.get_gamepath() .. DIR_DELIM .. package.name
+				end
+			end
 			local path, msg = pkgmgr.install_dir(package.type, result.path, package.name, package.path)
 			core.delete_dir(result.path)
 			if not path then
 				gamedata.errormessage = fgettext_ne("Error installing \"$1\": $2", package.title, msg)
 			else
+				if delete_old_dir then
+					core.delete_dir(delete_old_dir)
+				end
 				core.log("action", "Installed package to " .. path)
 
 				local conf_path
@@ -129,6 +145,15 @@ local function start_install(package, reason)
 					end
 					conf:set("author",     package.author)
 					conf:set("release",    package.release)
+					if package.aliases then
+						local gameid_alias = ""
+						for _, alias in pairs(package.aliases) do
+							local alias_cut = alias:split("/")
+							alias_cut = alias_cut[#alias_cut]
+							gameid_alias = gameid_alias .. alias_cut .. ","
+						end
+						conf:set("gameid_alias", gameid_alias)
+					end
 					conf:write()
 				end
 			end
