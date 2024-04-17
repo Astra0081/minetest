@@ -136,7 +136,7 @@ SubgameSpec findSubgame(const std::string &id)
 
 	std::string idv = id;
 
-	// Try to find aliased game
+	// Failed to find the game, try to find aliased game
 	if (game_path.empty()) {
 		std::vector<GameFindPath> gamespaths;
 		gamespaths.emplace_back(share + DIR_DELIM + "games", false);
@@ -163,11 +163,13 @@ SubgameSpec findSubgame(const std::string &id)
 
 				if (conf.exists("gameid_alias")) {
 					std::string alias = conf.get("gameid_alias");
+					// Try direct matching with the alias
 					if (alias == id) {
 						idv = dln.name;
 						game_path = path + DIR_DELIM + dln.name;
 						user_game = gamespath.user_specific;
 						break;
+					// Make sure a "_game" suffix is ignored
 					} else if (str_ends_with(id, "_game")) {
 						std::string_view id_trimmed{id.c_str(), id.size() - 5};
 						if (id_trimmed == alias) {
@@ -188,12 +190,13 @@ SubgameSpec findSubgame(const std::string &id)
 				}
 			}
 			if (!game_path.empty())
-				break;
+				break; // Aliased game has been found, escape the loop early
 		}
 
-		if (game_path.empty())
+		if (game_path.empty()) // Failed to find the game taking aliases into account
 			return SubgameSpec();
 	}
+	// Found the game, proceed
 
 	std::string gamemod_path = game_path + DIR_DELIM + "mods";
 
