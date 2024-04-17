@@ -387,11 +387,7 @@ local function fetch_pkgs(params)
 
 		if package.aliases then
 			for _, alias in ipairs(package.aliases) do
-				-- We currently don't support name changing
-				local suffix = "/" .. package.name
-				if alias:sub(-#suffix) == suffix then
-					aliases[alias:lower()] = package.id
-				end
+				aliases[alias:lower()] = package.id
 			end
 		end
 	end
