@@ -94,13 +94,9 @@ local function start_install(package, reason)
 			gamedata.errormessage = result.msg
 		else
 			local delete_old_dir
+			print(dump(package))
 			if package.path then
-				local path_array = package.path:split(DIR_DELIM)
-				local name = path_array[#path_array]
-				local name_len = #name
-				if name_len > 5 and name:sub(-5) == "_game" then
-					name = name:sub(1, name_len - 5)
-				end
+				local name = pkgmgr.normalize_game_id(package.path:match("[^/\\]+[/\\]?$"))
 				if name ~= package.name then
 					delete_old_dir = package.path
 					package.path = core.get_gamepath() .. DIR_DELIM .. package.name
@@ -146,13 +142,14 @@ local function start_install(package, reason)
 					conf:set("author",     package.author)
 					conf:set("release",    package.release)
 					if package.aliases then
-						local gameid_alias = ""
-						for _, alias in pairs(package.aliases) do
-							local alias_cut = alias:split("/")
-							alias_cut = alias_cut[#alias_cut]
-							gameid_alias = gameid_alias .. alias_cut .. ","
+						local gameid_aliases = {}
+						for _, alias in ipairs(package.aliases) do
+							local alias_cut = alias:match("[^/]+$")
+							if alias_cut ~= package.name then
+								gameid_aliases[#gameid_aliases + 1] = alias_cut
+							end
 						end
-						conf:set("gameid_alias", gameid_alias)
+						conf:set("gameid_alias", table.concat(gameid_aliases, ","))
 					end
 					conf:write()
 				end
@@ -410,9 +407,18 @@ local function fetch_pkgs(params)
 
 		package.url_part = core.urlencode(package.author) .. "/" .. core.urlencode(package.name)
 
+		if package.name == "void" then
+			package.aliases = {"Linuxdirk/old_void"}
+		end
+
 		if package.aliases then
+			local suffix = "/" .. package.name
+			local suf_len = #suffix
+			local is_game = package.type == "game"
 			for _, alias in ipairs(package.aliases) do
-				aliases[alias:lower()] = package.id
+				if is_game or alias:sub(suf_len) == suffix then
+					aliases[alias:lower()] = package.id
+				end
 			end
 		end
 	end
