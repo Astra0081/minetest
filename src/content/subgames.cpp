@@ -101,6 +101,15 @@ SubgameSpec findSubgame(const std::string &id)
 	std::string share = porting::path_share;
 	std::string user = porting::path_user;
 
+	auto normalize_game_id = [&](std::string_view name){
+		if (str_ends_with(name, "_game"))
+			return name.substr(0, name.size() - 5);
+
+		return name;
+	};
+
+	std::string idv = static_cast<std::string>(normalize_game_id(trim(id)));
+
 	// Get games install locations
 	Strfnd search_paths(getSubgamePathEnv());
 
@@ -134,8 +143,6 @@ SubgameSpec findSubgame(const std::string &id)
 		}
 	}
 
-	std::string idv = id;
-
 	// Failed to find the game, try to find aliased game
 	if (game_path.empty()) {
 		std::vector<GameFindPath> gamespaths;
@@ -147,49 +154,37 @@ SubgameSpec findSubgame(const std::string &id)
 		while (!search_paths.at_end())
 			gamespaths.emplace_back(search_paths.next(PATH_DELIM), false);
 
-		for (const GameFindPath &gamespath : gamespaths) {
-			const std::string &path = gamespath.path;
-			std::vector<fs::DirListNode> dirlist = fs::GetDirListing(path);
-			for (const fs::DirListNode &dln : dirlist) {
-				if (!dln.dir)
-					continue;
+		auto look_for_alias = [&](){
+			for (const GameFindPath &gamespath : gamespaths) {
+				const std::string &path = gamespath.path;
+				std::vector<fs::DirListNode> dirlist = fs::GetDirListing(path);
+				for (const fs::DirListNode &dln : dirlist) {
+					if (!dln.dir)
+						continue;
 
-				// If configuration file is not found or broken, ignore game
-				Settings conf;
-				std::string conf_path = path + DIR_DELIM + dln.name +
-							DIR_DELIM + "game.conf";
-				if (!conf.readConfigFile(conf_path.c_str()))
-					continue;
+					// If configuration file is not found or broken, ignore game
+					Settings conf;
+					std::string conf_path = path + DIR_DELIM + dln.name +
+								DIR_DELIM + "game.conf";
+					if (!conf.readConfigFile(conf_path.c_str()))
+						continue;
 
-				if (conf.exists("gameid_alias")) {
-					std::vector<std::string> aliases = str_split(conf.get("gameid_alias"), ',');
-					for (const std::string &alias_raw : aliases) {
-						std::string_view alias = trim(alias_raw);
-						auto found_alias = [&](){
-							idv = dln.name;
-							game_path = path + DIR_DELIM + dln.name;
-							user_game = gamespath.user_specific;
-						};
-						// Try direct matching with the alias
-						if (alias == id) {
-							found_alias();
-							break;
-						// Make sure a "_game" suffix is ignored
-						} else if (str_ends_with(alias, "_game")
-							&& alias.substr(0, alias.size() - 5) == id) {
-								found_alias();
-								break;
-						} else if (str_ends_with(id, "_game")
-							&& id.substr(0, id.size() - 5) == alias) {
-								found_alias();
-								break;
+					if (conf.exists("aliases")) {
+						std::vector<std::string> aliases = str_split(conf.get("aliases"), ',');
+						for (const std::string &alias_raw : aliases) {
+							std::string_view alias = normalize_game_id(trim(alias_raw));
+							if (alias == idv) {
+								idv = dln.name;
+								game_path = path + DIR_DELIM + dln.name;
+								user_game = gamespath.user_specific;
+								return;
+							}
 						}
 					}
 				}
 			}
-			if (!game_path.empty())
-				break; // Aliased game has been found, escape the loop early
-		}
+		};
+		look_for_alias();
 
 		if (game_path.empty()) // Failed to find the game taking aliases into account
 			return SubgameSpec();
@@ -229,9 +224,13 @@ SubgameSpec findSubgame(const std::string &id)
 	if (conf.exists("release"))
 		game_release = conf.getS32("release");
 
-	std::string gameid_alias;
-	if (conf.exists("gameid_alias"))
-		gameid_alias = conf.get("gameid_alias");
+	std::unordered_set<std::string> aliases;
+	if (conf.exists("aliases"))
+	{
+		std::vector<std::string> aliases_raw = str_split(conf.get("aliases"), ',');
+		for (const std::string &alias : aliases_raw)
+			aliases.insert(static_cast<std::string>(normalize_game_id(trim(alias))));
+	}
 
 	std::string menuicon_path;
 #ifndef SERVER
@@ -240,7 +239,7 @@ SubgameSpec findSubgame(const std::string &id)
 #endif
 
 	SubgameSpec spec(id, game_path, gamemod_path, mods_paths, game_title,
-			menuicon_path, game_author, game_release, gameid_alias);
+			menuicon_path, game_author, game_release, aliases);
 
 	if (conf.exists("name") && !conf.exists("title"))
 		spec.deprecation_msgs.push_back("\"name\" setting in game.conf is deprecated, please use \"title\" instead");

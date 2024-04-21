@@ -360,9 +360,7 @@ local function main_button_handler(this, fields, name, tabdata)
 			if not game_obj then
 				local function try_to_find_alias(world)
 					for _, game in ipairs(pkgmgr.games) do
-						local aliases = game.aliases:split()
-						for _, alias in pairs(aliases) do
-							alias = alias:trim()
+						for _, alias in pairs(game.aliases) do
 							if pkgmgr.normalize_game_id(alias) == pkgmgr.normalize_game_id(world.gameid) then
 								world.gameid = game.id
 								return game

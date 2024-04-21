@@ -81,25 +81,9 @@ local function init_globals()
 			if element.gameid == gameid then
 				return true
 			end
-			local gameconfig = Settings(pkgmgr.find_by_gameid(gameid).path .. "/game.conf")
-			local aliases = (gameconfig:get("gameid_alias") or ""):split()
-			for _, alias in pairs(aliases) do
-				alias = alias:trim()
-				if element.gameid == alias then
+			for _, alias in ipairs(pkgmgr.find_by_gameid(gameid).aliases) do
+				if pkgmgr.normalize_game_id(element.gameid) == pkgmgr.normalize_game_id(alias) then
 					return true
-				else
-					local el_id_len = #element.gameid
-					if el_id_len > 5 and element.gameid:sub(el_id_len - 4) == "_game" then
-						if element.gameid:sub(1, el_id_len - 5) == alias then
-							return true
-						end
-					end
-					local alias_len = #alias
-					if alias_len > 5 and alias:sub(alias_len - 4) == "_game" then
-						if element.gameid == alias:sub(1, alias_len - 5) then
-							return true
-						end
-					end
 				end
 			end
 			return false
