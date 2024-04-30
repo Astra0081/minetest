@@ -38,6 +38,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "porting.h"
 #include <algorithm>
 #include "client/renderingengine.h"
+#include "light_colors.h"
 
 /*
 	ClientEnvironment

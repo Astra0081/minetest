@@ -36,6 +36,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "settings.h"
 #include "profiler.h"
 #include "client/mapblock_mesh.h"
+#include "light_colors.h"
 
 ClientParticleTexture::ClientParticleTexture(const ServerParticleTexture& p, ITextureSource *tsrc)
 {
@@ -186,7 +187,7 @@ video::SColor Particle::updateLight(ClientEnvironment *env)
 	else
 		light = blend_light(env->getDayNightRatio(), LIGHT_SUN, 0);
 
-	light += m_p.glow;
+	light = decode_light(light + m_p.glow);
 
 	video::SColor light_color{0xFFFFFFFF};
 
