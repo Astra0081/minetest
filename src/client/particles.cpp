@@ -191,7 +191,7 @@ video::SColor Particle::updateLight(ClientEnvironment *env)
 
 	video::SColor light_color{0xFFFFFFFF};
 
-	final_color_blend(&light_color, u16(light), env->getDayNightRatio(),
+	final_color_blend(&light_color, static_cast<u16>(light) * 255, env->getDayNightRatio(),
 			env->getLocalPlayer()->getLighting().ambient_light);
 	return video::SColor(255,
 		light_color.getRed() * m_base_color.getRed() / 255,
