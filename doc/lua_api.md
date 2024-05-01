@@ -8399,6 +8399,10 @@ child will follow movement and rotation of that bone.
         (default: `{a = 255, r = 0, g = 0, b = 0}` / last set value).
         * It works only if shaders are enabled.
         * Alpha is ignored (it is always set to 255).
+        * Note: Total light is clamped before being applied.
+          This means that when an object is fully lit, ambient light
+          will take no effect. Setting ambient light to `"#FFFFFF"`
+          will make all objects be fully lit at all times ("fullbright").
       * `saturation` sets the saturation (vividness; default: `1.0`).
         * values > 1 increase the saturation
         * values in [0,1] decrease the saturation
