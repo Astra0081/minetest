@@ -2660,7 +2660,7 @@ void Game::updateCameraDirection(CameraOrientation *cam, float dtime)
 				cur_control->setVisible(false);
 		}
 
-		if (m_first_loop_after_window_activation) {
+		if (m_first_loop_after_window_activation && !g_touchcontrols) {
 			m_first_loop_after_window_activation = false;
 
 			input->setMousePos(driver->getScreenSize().Width / 2,
@@ -2676,6 +2676,8 @@ void Game::updateCameraDirection(CameraOrientation *cam, float dtime)
 
 		m_first_loop_after_window_activation = true;
 	}
+	if (g_touchcontrols)
+		m_first_loop_after_window_activation = true;
 }
 
 // Get the factor to multiply with sensitivity to get the same mouse/joystick
