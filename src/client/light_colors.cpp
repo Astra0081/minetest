@@ -47,7 +47,8 @@ video::SColor encode_light(u16 light, u8 emissive_light)
 	return video::SColor(r, b, b, b);
 }
 
-void get_sunlight_color(video::SColorf *sunlight, u32 daynight_ratio){
+void get_sunlight_color(video::SColorf *sunlight, u32 daynight_ratio)
+{
 	f32 rg = daynight_ratio / 1000.0f - 0.04f;
 	f32 b = (0.98f * daynight_ratio) / 1000.0f + 0.078f;
 	sunlight->r = rg;
@@ -56,7 +57,7 @@ void get_sunlight_color(video::SColorf *sunlight, u32 daynight_ratio){
 }
 
 void final_color_blend(video::SColor *result,
-		u16 light, u32 daynight_ratio, video::SColor ambientLight)
+		u16 light, u32 daynight_ratio, const video::SColorf &ambientLight)
 {
 	video::SColorf dayLight;
 	get_sunlight_color(&dayLight, daynight_ratio);
@@ -66,7 +67,7 @@ void final_color_blend(video::SColor *result,
 
 void final_color_blend(video::SColor *result,
 		const video::SColor &data, const video::SColorf &dayLight,
-		video::SColor ambientLight)
+		const video::SColorf &ambientLight)
 {
 	static const video::SColorf artificialColor(1.04f, 1.04f, 1.04f);
 
@@ -88,9 +89,9 @@ void final_color_blend(video::SColor *result,
 		0, 255) / 8] / 255.0f;
 
 	// Add ambient light
-	r += ambientLight.getRed() / 255.f;
-	g += ambientLight.getGreen() / 255.f;
-	b += ambientLight.getBlue() / 255.f;
+	r += ambientLight.r;
+	g += ambientLight.g;
+	b += ambientLight.b;
 
 	result->setRed(core::clamp((s32)(r * 255.f), 0, 255));
 	result->setGreen(core::clamp((s32)(g * 255.f), 0, 255));

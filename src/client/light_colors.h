@@ -47,7 +47,7 @@ void get_sunlight_color(video::SColorf *sunlight, u32 daynight_ratio);
  * night light
  */
 void final_color_blend(video::SColor *result,
-		u16 light, u32 daynight_ratio, video::SColor ambientLight=video::SColor(255,0,0,0));
+		u16 light, u32 daynight_ratio, const video::SColorf &ambientLight=video::SColorf(0.0f, 0.0f, 0.0f, 1.0f));
 
 /*!
  * Gives the final  SColor shown on screen.
@@ -58,4 +58,4 @@ void final_color_blend(video::SColor *result,
  */
 void final_color_blend(video::SColor *result,
 		const video::SColor &data, const video::SColorf &dayLight,
-		video::SColor ambientLight=video::SColor(255,0,0,0));
+		const video::SColorf &ambientLight=video::SColorf(0.0f, 0.0f, 0.0f, 1.0f));

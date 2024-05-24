@@ -475,7 +475,7 @@ public:
 		get_sunlight_color(&sunlight, daynight_ratio);
 		m_day_light.set(sunlight, services);
 
-		auto lighting = m_client->getEnv().getLocalPlayer()->getLighting();
+		Lighting &lighting = m_client->getEnv().getLocalPlayer()->getLighting();
 
 		video::SColorf ambient_light_f(lighting.ambient_light);
 		m_ambient_light.set(ambient_light_f, services);

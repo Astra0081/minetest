@@ -189,10 +189,12 @@ video::SColor Particle::updateLight(ClientEnvironment *env)
 
 	light = decode_light(light + m_p.glow);
 
-	video::SColor light_color{0xFFFFFFFF};
+	video::SColor light_color(0xFFFFFFFF);
+	video::SColor ambient_light = g_settings->getBool("enable_shaders") ?
+		env->getLocalPlayer()->getLighting().ambient_light : video::SColor(255, 0, 0, 0);
 
 	final_color_blend(&light_color, static_cast<u16>(light) * 255, env->getDayNightRatio(),
-			env->getLocalPlayer()->getLighting().ambient_light);
+			ambient_light);
 	return video::SColor(255,
 		light_color.getRed() * m_base_color.getRed() / 255,
 		light_color.getGreen() * m_base_color.getGreen() / 255,
