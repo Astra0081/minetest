@@ -21,6 +21,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "irrlichttypes.h"
 #include <string>
+#include "client/clientgamestartdata.h"
 
 #ifdef SERVER
 #error Do not include in server builds
@@ -53,7 +54,7 @@ struct CameraOrientation {
 void the_game(bool *kill,
 		InputHandler *input,
 		RenderingEngine *rendering_engine,
-		const GameStartData &start_data,
+		ClientGameStartData &start_data,
 		std::string &error_message,
 		ChatBackend &chat_backend,
 		bool *reconnect_requested);

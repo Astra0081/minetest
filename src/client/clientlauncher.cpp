@@ -98,7 +98,8 @@ bool ClientLauncher::run(GameStartData &start_data, const Settings &cmd_args)
 	 *   - Local server (for main menu only)
 	*/
 
-	init_args(start_data, cmd_args);
+	ClientGameStartData client_start_data(start_data);
+	init_args(client_start_data, cmd_args);
 
 #if USE_SOUND
 	if (g_settings->getBool("enable_sound"))
@@ -186,7 +187,7 @@ bool ClientLauncher::run(GameStartData &start_data, const Settings &cmd_args)
 				core::rect<s32>(0, 0, 10000, 10000));
 
 			bool should_run_game = launch_game(error_message, reconnect_requested,
-				start_data, cmd_args);
+				client_start_data, cmd_args);
 
 			// Reset the reconnect_requested flag
 			reconnect_requested = false;
@@ -210,7 +211,7 @@ bool ClientLauncher::run(GameStartData &start_data, const Settings &cmd_args)
 				kill,
 				input,
 				m_rendering_engine,
-				start_data,
+				client_start_data,
 				error_message,
 				chat_backend,
 				&reconnect_requested
@@ -265,7 +266,7 @@ bool ClientLauncher::run(GameStartData &start_data, const Settings &cmd_args)
 	return retval;
 }
 
-void ClientLauncher::init_args(GameStartData &start_data, const Settings &cmd_args)
+void ClientLauncher::init_args(ClientGameStartData &start_data, const Settings &cmd_args)
 {
 	skip_main_menu = cmd_args.getFlag("go");
 
@@ -366,20 +367,22 @@ void ClientLauncher::init_guienv(gui::IGUIEnvironment *guienv)
 }
 
 bool ClientLauncher::launch_game(std::string &error_message,
-		bool reconnect_requested, GameStartData &start_data,
+		bool reconnect_requested, ClientGameStartData &start_data,
 		const Settings &cmd_args)
 {
 	// Prepare and check the start data to launch a game
 	std::string error_message_lua = error_message;
 	error_message.clear();
 
+	std::string password;
+
 	if (cmd_args.exists("password"))
-		start_data.password = cmd_args.get("password");
+		password = cmd_args.get("password");
 
 	if (cmd_args.exists("password-file")) {
 		std::ifstream passfile(cmd_args.get("password-file"));
 		if (passfile.good()) {
-			std::getline(passfile, start_data.password);
+			std::getline(passfile, password);
 		} else {
 			error_message = gettext("Provided password file "
 					"failed to open: ")
@@ -408,7 +411,7 @@ bool ClientLauncher::launch_game(std::string &error_message,
 		MainMenuData menudata;
 		menudata.address                         = start_data.address;
 		menudata.name                            = start_data.name;
-		menudata.password                        = start_data.password;
+		menudata.password                        = password;
 		menudata.port                            = itos(start_data.socket_port);
 		menudata.script_data.errormessage        = std::move(error_message_lua);
 		menudata.script_data.reconnect_requested = reconnect_requested;
@@ -440,11 +443,14 @@ bool ClientLauncher::launch_game(std::string &error_message,
 		}
 
 		start_data.name = menudata.name;
-		start_data.password = menudata.password;
+		password = menudata.password;
 		start_data.address = std::move(menudata.address);
 		start_data.allow_login_or_register = menudata.allow_login_or_register;
 		server_name = menudata.servername;
 		server_description = menudata.serverdescription;
+
+		/* make sure that password will not stay somewhere in memory */
+		porting::secure_clear_string(menudata.password);
 
 		start_data.local_server = !menudata.simple_singleplayer_mode &&
 			start_data.address.empty();
@@ -453,23 +459,35 @@ bool ClientLauncher::launch_game(std::string &error_message,
 			start_data.address.empty() && !start_data.name.empty();
 	}
 
-	if (!m_rendering_engine->run())
+	if (!m_rendering_engine->run()) {
+		/* make sure that password will not stay somewhere in memory */
+		porting::secure_clear_string(password);
 		return false;
+	}
 
 	if (!start_data.isSinglePlayer() && start_data.name.empty()) {
 		error_message = gettext("Please choose a name!");
 		errorstream << error_message << std::endl;
+		/* make sure that password will not stay somewhere in memory */
+		porting::secure_clear_string(password);
 		return false;
 	}
 
 	// If using simple singleplayer mode, override
 	if (start_data.isSinglePlayer()) {
 		start_data.name = "singleplayer";
-		start_data.password = "";
+		password = "";
 		start_data.socket_port = myrand_range(49152, 65535);
 	} else {
 		g_settings->set("name", start_data.name);
 	}
+
+	if (!reconnect_requested) {
+		// This should not be call on reconnect request, because password has been erased.
+		start_data.auth.applyPassword(start_data.name, password);
+	}
+	/* make sure that password will not stay somewhere in memory */
+	porting::secure_clear_string(password);
 
 	if (start_data.name.length() > PLAYERNAME_SIZE - 1) {
 		error_message = gettext("Player name too long.");

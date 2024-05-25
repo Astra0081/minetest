@@ -1,6 +1,6 @@
 /*
 Minetest
-Copyright (C) 2010-2013 celeron55, Perttu Ahola <celeron55@gmail.com>
+Copyright (C) 2024 SFENCE, <sfence.software@gmail.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
@@ -19,35 +19,26 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #pragma once
 
-#include "irrlichttypes.h"
-#include "content/subgames.h"
-#include "porting.h"
-
-// Information provided from "main"
-struct GameParams
-{
-	GameParams() = default;
-
-	u16 socket_port;
-	std::string world_path;
-	SubgameSpec game_spec;
-	bool is_dedicated_server;
-};
-
-enum class ELoginRegister {
-	Any = 0,
-	Login,
-	Register
-};
+#include "gameparams.h"
+#include "clientauth.h"
 
 // Information processed by main menu
-struct GameStartData : GameParams
+struct ClientGameStartData : GameParams
 {
-	GameStartData() = default;
+	ClientGameStartData(const GameStartData &start_data):
+		GameParams(start_data),
+		name(start_data.name),
+		address(start_data.address),
+		local_server(start_data.local_server),
+		allow_login_or_register(start_data.allow_login_or_register),
+		world_spec(start_data.world_spec)
+	{
+	}
 
 	bool isSinglePlayer() const { return address.empty() && !local_server; }
 
 	std::string name;
+	ClientAuth auth;
 	std::string address;
 	bool local_server;
 
