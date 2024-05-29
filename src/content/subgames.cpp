@@ -101,6 +101,15 @@ SubgameSpec findSubgame(const std::string &id)
 	std::string share = porting::path_share;
 	std::string user = porting::path_user;
 
+	auto normalize_game_id = [&](std::string_view name){
+		if (str_ends_with(name, "_game"))
+			return name.substr(0, name.size() - 5);
+
+		return name;
+	};
+
+	std::string idv = static_cast<std::string>(normalize_game_id(trim(id)));
+
 	// Get games install locations
 	Strfnd search_paths(getSubgamePathEnv());
 
@@ -134,8 +143,53 @@ SubgameSpec findSubgame(const std::string &id)
 		}
 	}
 
-	if (game_path.empty())
-		return SubgameSpec();
+	// Failed to find the game, try to find aliased game
+	if (game_path.empty()) {
+		std::vector<GameFindPath> gamespaths;
+		gamespaths.emplace_back(share + DIR_DELIM + "games", false);
+		gamespaths.emplace_back(user + DIR_DELIM + "games", true);
+
+		Strfnd search_paths(getSubgamePathEnv());
+
+		while (!search_paths.at_end())
+			gamespaths.emplace_back(search_paths.next(PATH_DELIM), false);
+
+		auto look_for_alias = [&](){
+			for (const GameFindPath &gamespath : gamespaths) {
+				const std::string &path = gamespath.path;
+				std::vector<fs::DirListNode> dirlist = fs::GetDirListing(path);
+				for (const fs::DirListNode &dln : dirlist) {
+					if (!dln.dir)
+						continue;
+
+					// If configuration file is not found or broken, ignore game
+					Settings conf;
+					std::string conf_path = path + DIR_DELIM + dln.name +
+								DIR_DELIM + "game.conf";
+					if (!conf.readConfigFile(conf_path.c_str()))
+						continue;
+
+					if (conf.exists("aliases")) {
+						std::vector<std::string> aliases = str_split(conf.get("aliases"), ',');
+						for (const std::string &alias_raw : aliases) {
+							std::string_view alias = normalize_game_id(trim(alias_raw));
+							if (alias == idv) {
+								idv = dln.name;
+								game_path = path + DIR_DELIM + dln.name;
+								user_game = gamespath.user_specific;
+								return;
+							}
+						}
+					}
+				}
+			}
+		};
+		look_for_alias();
+
+		if (game_path.empty()) // Failed to find the game taking aliases into account
+			return SubgameSpec();
+	}
+	// Found the game, proceed
 
 	std::string gamemod_path = game_path + DIR_DELIM + "mods";
 
@@ -160,7 +214,7 @@ SubgameSpec findSubgame(const std::string &id)
 	else if (conf.exists("name"))
 		game_title = conf.get("name");
 	else
-		game_title = id;
+		game_title = idv;
 
 	std::string game_author;
 	if (conf.exists("author"))
@@ -170,6 +224,14 @@ SubgameSpec findSubgame(const std::string &id)
 	if (conf.exists("release"))
 		game_release = conf.getS32("release");
 
+	std::unordered_set<std::string> aliases;
+	if (conf.exists("aliases"))
+	{
+		std::vector<std::string> aliases_raw = str_split(conf.get("aliases"), ',');
+		for (const std::string &alias : aliases_raw)
+			aliases.insert(static_cast<std::string>(normalize_game_id(trim(alias))));
+	}
+
 	std::string menuicon_path;
 #ifndef SERVER
 	menuicon_path = getImagePath(
@@ -177,7 +239,7 @@ SubgameSpec findSubgame(const std::string &id)
 #endif
 
 	SubgameSpec spec(id, game_path, gamemod_path, mods_paths, game_title,
-			menuicon_path, game_author, game_release);
+			menuicon_path, game_author, game_release, aliases);
 
 	if (conf.exists("name") && !conf.exists("title"))
 		spec.deprecation_msgs.push_back("\"name\" setting in game.conf is deprecated, please use \"title\" instead");

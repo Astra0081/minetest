@@ -95,11 +95,22 @@ local function start_install(package, reason)
 		if result.msg then
 			gamedata.errormessage = result.msg
 		else
+			local delete_old_dir
+			if package.path then
+				local name = pkgmgr.normalize_game_id(package.path:match("[^/\\]+[/\\]?$"))
+				if name ~= package.name then
+					delete_old_dir = package.path
+					package.path = core.get_gamepath() .. DIR_DELIM .. package.name
+				end
+			end
 			local path, msg = pkgmgr.install_dir(package.type, result.path, package.name, package.path)
 			core.delete_dir(result.path)
 			if not path then
 				gamedata.errormessage = fgettext_ne("Error installing \"$1\": $2", package.title, msg)
 			else
+				if delete_old_dir then
+					core.delete_dir(delete_old_dir)
+				end
 				core.log("action", "Installed package to " .. path)
 
 				local conf_path
@@ -131,6 +142,16 @@ local function start_install(package, reason)
 					end
 					conf:set("author",     package.author)
 					conf:set("release",    package.release)
+					if package.aliases then
+						local gameid_aliases = {}
+						for _, alias in ipairs(package.aliases) do
+							local alias_cut = alias:match("[^/]+$")
+							if alias_cut ~= package.name then
+								gameid_aliases[#gameid_aliases + 1] = alias_cut
+							end
+						end
+						conf:set("aliases", table.concat(gameid_aliases, ","))
+					end
 					conf:write()
 				end
 			end
@@ -388,10 +409,11 @@ local function fetch_pkgs(params)
 		package.url_part = core.urlencode(package.author) .. "/" .. core.urlencode(package.name)
 
 		if package.aliases then
+			local suffix = "/" .. package.name
+			local suf_len = #suffix
+			local is_game = package.type == "game"
 			for _, alias in ipairs(package.aliases) do
-				-- We currently don't support name changing
-				local suffix = "/" .. package.name
-				if alias:sub(-#suffix) == suffix then
+				if is_game or alias:sub(suf_len) == suffix then
 					aliases[alias:lower()] = package.id
 				end
 			end

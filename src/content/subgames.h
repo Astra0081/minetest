@@ -22,6 +22,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <string>
 #include <set>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 class Settings;
@@ -41,6 +42,8 @@ struct SubgameSpec
 	std::unordered_map<std::string, std::string> addon_mods_paths;
 	std::string menuicon_path;
 
+	std::unordered_set<std::string> aliases;
+
 	// For logging purposes
 	std::vector<const char *> deprecation_msgs;
 
@@ -49,11 +52,12 @@ struct SubgameSpec
 			const std::unordered_map<std::string, std::string> &addon_mods_paths = {},
 			const std::string &title = "",
 			const std::string &menuicon_path = "",
-			const std::string &author = "", int release = 0) :
+			const std::string &author = "", int release = 0,
+			const std::unordered_set<std::string> &aliases = {}) :
 			id(id),
 			title(title), author(author), release(release), path(path),
 			gamemods_path(gamemods_path), addon_mods_paths(addon_mods_paths),
-			menuicon_path(menuicon_path)
+			menuicon_path(menuicon_path), aliases(aliases)
 	{
 	}
 

@@ -829,6 +829,13 @@ function pkgmgr.get_contentdb_id(content)
 end
 
 --------------------------------------------------------------------------------
+-- Normalizes ID of a game
+function pkgmgr.normalize_game_id(name)
+	return name:match("(.*)_game$") or name
+end
+
+
+--------------------------------------------------------------------------------
 -- read initial data
 --------------------------------------------------------------------------------
 pkgmgr.update_gamelist()
