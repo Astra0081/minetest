@@ -1137,9 +1137,9 @@ void drawItemStack(
 			if (p.needColorize(c)) {
 				buf->setDirty(scene::EBT_VERTEX);
 				if (imesh->needs_shading)
-					colorizeMeshBuffer(buf, &c);
+					colorizeMeshBufferTangents(buf, &c);
 				else
-					setMeshBufferColor(buf, c);
+					setMeshBufferTangentsColor(buf, c);
 			}
 
 			video::SMaterial &material = buf->getMaterial();

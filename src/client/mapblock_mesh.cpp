@@ -630,7 +630,8 @@ MapBlockMesh::MapBlockMesh(Client *client, MeshMakeData *data, v3s16 camera_offs
 		{
 			PreMeshBuffer &p = collector.prebuffers[layer][i];
 
-			applyTileColor(p);
+			if (!m_enable_shaders)
+				applyTileColor(p);
 
 			// Generate animation data
 			// - Cracks
@@ -717,10 +718,25 @@ MapBlockMesh::MapBlockMesh(Client *client, MeshMakeData *data, v3s16 camera_offs
 				p.layer.applyMaterialOptions(material);
 			}
 
-			scene::SMeshBuffer *buf = new scene::SMeshBuffer();
+			scene::SMeshBufferTangents *buf = new scene::SMeshBufferTangents();
 			buf->Material = material;
+
+			std::vector<video::S3DVertexTangents> tangents;
+
+			// Copy S3DVertex to S3DVertexTangents
+			for (auto &v : p.vertices) {
+				video::SColor &c = p.layer.color;
+				v3f hw_color{0.0f};
+
+				if (m_enable_shaders) {
+					hw_color.X = c.getRed() / 255.0f;
+					hw_color.Y = c.getGreen() / 255.0f;
+					hw_color.Z = c.getBlue() / 255.0f;
+				}
+				tangents.emplace_back(v.Pos, v.Normal, v.Color, v.TCoords, hw_color);
+			}
 			if (p.layer.isTransparent()) {
-				buf->append(&p.vertices[0], p.vertices.size(), nullptr, 0);
+				buf->append(&tangents[0], tangents.size(), nullptr, 0);
 
 				MeshTriangle t;
 				t.buffer = buf;
@@ -733,7 +749,7 @@ MapBlockMesh::MapBlockMesh(Client *client, MeshMakeData *data, v3s16 camera_offs
 					m_transparent_triangles.push_back(t);
 				}
 			} else {
-				buf->append(&p.vertices[0], p.vertices.size(),
+				buf->append(&tangents[0], tangents.size(),
 					&p.indices[0], p.indices.size());
 			}
 			mesh->addMeshBuffer(buf);
@@ -829,20 +845,19 @@ bool MapBlockMesh::animate(bool faraway, float time, int crack,
 	if (!m_enable_shaders && (daynight_ratio != m_last_daynight_ratio)) {
 		video::SColorf day_color;
 		get_sunlight_color(&day_color, daynight_ratio);
-
 		for (auto &daynight_diff : m_daynight_diffs) {
 			auto *mesh = m_mesh[daynight_diff.first.first];
 			mesh->setDirty(scene::EBT_VERTEX); // force reload to VBO
 			scene::IMeshBuffer *buf = mesh->
 				getMeshBuffer(daynight_diff.first.second);
-			video::S3DVertex *vertices = (video::S3DVertex *)buf->getVertices();
+			video::S3DVertexTangents *vertices = (video::S3DVertexTangents*)buf->getVertices();
+
 			for (const auto &j : daynight_diff.second)
 				final_color_blend(&(vertices[j.first].Color), j.second,
 								day_color);
 		}
 		m_last_daynight_ratio = daynight_ratio;
 	}
-
 	return true;
 }
 
@@ -861,7 +876,7 @@ void MapBlockMesh::updateTransparentBuffers(v3f camera_pos, v3s16 block_pos)
 	// arrange index sequences into partial buffers
 	m_transparent_buffers.clear();
 
-	scene::SMeshBuffer *current_buffer = nullptr;
+	scene::SMeshBufferTangents *current_buffer = nullptr;
 	std::vector<u16> current_strain;
 	for (auto i : triangle_refs) {
 		const auto &t = m_transparent_triangles[i];
@@ -885,7 +900,7 @@ void MapBlockMesh::consolidateTransparentBuffers()
 {
 	m_transparent_buffers.clear();
 
-	scene::SMeshBuffer *current_buffer = nullptr;
+	scene::SMeshBufferTangents *current_buffer = nullptr;
 	std::vector<u16> current_strain;
 
 	// use the fact that m_transparent_triangles is already arranged by buffer
