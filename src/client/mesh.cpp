@@ -25,6 +25,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <IAnimatedMesh.h>
 #include <SAnimatedMesh.h>
 #include <IAnimatedMeshSceneNode.h>
+#include <array>
 
 inline static void applyShadeFactor(video::SColor& color, float factor)
 {
@@ -161,7 +162,7 @@ void scaleMesh(scene::IMesh *mesh, v3f scale)
 	u32 mc = mesh->getMeshBufferCount();
 	for (u32 j = 0; j < mc; j++) {
 		scene::IMeshBuffer *buf = mesh->getMeshBuffer(j);
-		video::S3DVertex *vertices = (video::S3DVertex*)buf->getVertices();
+		video::S3DVertex *vertices = static_cast<video::S3DVertex*>(buf->getVertices());
 		for (u32 i = 0; i < buf->getVertexCount(); i++)
 			vertices[i].Pos *= scale;
 
@@ -187,7 +188,7 @@ void scaleMeshTangents(scene::IMesh *mesh, v3f scale)
 	u32 mc = mesh->getMeshBufferCount();
 	for (u32 j = 0; j < mc; j++) {
 		scene::IMeshBuffer *buf = mesh->getMeshBuffer(j);
-		video::S3DVertexTangents *vertices = (video::S3DVertexTangents*)buf->getVertices();
+		video::S3DVertexTangents *vertices = static_cast<video::S3DVertexTangents*>(buf->getVertices());
 		for (u32 i = 0; i < buf->getVertexCount(); i++)
 			vertices[i].Pos *= scale;
 
@@ -213,7 +214,7 @@ void translateMeshTangents(scene::IMesh *mesh, v3f vec)
 	u32 mc = mesh->getMeshBufferCount();
 	for (u32 j = 0; j < mc; j++) {
 		scene::IMeshBuffer *buf = mesh->getMeshBuffer(j);
-		video::S3DVertex *vertices = (video::S3DVertexTangents*)buf->getVertices();
+		video::S3DVertexTangents *vertices = static_cast<video::S3DVertexTangents*>(buf->getVertices());
 		for (u32 i = 0; i < buf->getVertexCount(); i++)
 			vertices[i].Pos += vec;
 
@@ -230,7 +231,7 @@ void translateMeshTangents(scene::IMesh *mesh, v3f vec)
 
 void setMeshBufferColor(scene::IMeshBuffer *buf, const video::SColor &color)
 {
-	video::S3DVertex *vertices = (video::S3DVertex*)buf->getVertices();
+	video::S3DVertex *vertices = static_cast<video::S3DVertex*>(buf->getVertices());
 	for (u32 i = 0; i < buf->getVertexCount(); i++)
 		vertices[i].Color = color;
 }
@@ -238,7 +239,7 @@ void setMeshBufferColor(scene::IMeshBuffer *buf, const video::SColor &color)
 void setMeshBufferTangentsColor(scene::IMeshBuffer *buf,
 	const video::SColor &color, const video::SColor &hw_color)
 {
-	video::S3DVertexTangents *vertices = (video::S3DVertexTangents*)buf->getVertices();
+	video::S3DVertexTangents *vertices = static_cast<video::S3DVertexTangents*>(buf->getVertices());
 
 	for (u32 i = 0; i < buf->getVertexCount(); i++) {
 		vertices[i].Color = color;
@@ -262,20 +263,10 @@ void setMeshColor(scene::IMesh *mesh, const video::SColor &color)
 		setMeshBufferColor(mesh->getMeshBuffer(j), color);
 }
 
-/*void setMeshTangentsColor(scene::IMesh *mesh, const video::SColor &color,
-	const video::SColor &hw_color)
-{
-	if (!mesh)
-		return;
-
-	for (u32 j = 0; j < mesh->getMeshBufferCount(); j++)
-		setMeshBufferTangentsColor(mesh->getMeshBuffer(j), color, hw_color);
-}*/
-
 void setMeshBufferTextureCoords(scene::IMeshBuffer *buf, const v2f *uv, u32 count)
 {
 	assert(buf->getVertexCount() >= count);
-	video::S3DVertex *vertices = (video::S3DVertex*)buf->getVertices();
+	video::S3DVertex *vertices = static_cast<video::S3DVertex*>(buf->getVertices());
 	for (u32 i = 0; i < count; i++)
 		vertices[i].TCoords = uv[i];
 }
@@ -285,7 +276,7 @@ static void applyToMesh(scene::IMesh *mesh, const F &fn)
 {
 	for (u16 j = 0; j < mesh->getMeshBufferCount(); j++) {
 		scene::IMeshBuffer *buf = mesh->getMeshBuffer(j);
-		T *vertices = (T*)buf->getVertices();
+		T *vertices = static_cast<T*>(buf->getVertices());
 		for (u32 i = 0; i < buf->getVertexCount(); i++)
 			fn(&vertices[i]);
 	}
@@ -293,7 +284,7 @@ static void applyToMesh(scene::IMesh *mesh, const F &fn)
 
 void colorizeMeshBufferTangents(scene::IMeshBuffer *buf, const video::SColor *buffercolor)
 {
-	video::S3DVertexTangents *vertices = (video::S3DVertexTangents*)buf->getVertices();
+	video::S3DVertexTangents *vertices = static_cast<video::S3DVertexTangents*>(buf->getVertices());
 	for (u32 i = 0; i < buf->getVertexCount(); i++) {
 		video::S3DVertexTangents *vertex = &vertices[i];
 		video::SColor *vc = &(vertex->Color);
@@ -415,7 +406,7 @@ scene::IMeshBuffer* cloneMeshBuffer(scene::IMeshBuffer *mesh_buffer)
 {
 	switch (mesh_buffer->getVertexType()) {
 	case video::EVT_STANDARD: {
-		video::S3DVertex *v = (video::S3DVertex*)mesh_buffer->getVertices();
+		video::S3DVertex *v = static_cast<video::S3DVertex*>(mesh_buffer->getVertices());
 		u16 *indices = mesh_buffer->getIndices();
 		scene::SMeshBuffer *cloned_buffer = new scene::SMeshBuffer();
 		cloned_buffer->append(v, mesh_buffer->getVertexCount(), indices,
@@ -424,7 +415,7 @@ scene::IMeshBuffer* cloneMeshBuffer(scene::IMeshBuffer *mesh_buffer)
 	}
 	case video::EVT_2TCOORDS: {
 		video::S3DVertex2TCoords *v =
-			(video::S3DVertex2TCoords*)mesh_buffer->getVertices();
+			static_cast<video::S3DVertex2TCoords*>(mesh_buffer->getVertices());
 		u16 *indices = mesh_buffer->getIndices();
 		scene::SMeshBufferLightMap *cloned_buffer =
 			new scene::SMeshBufferLightMap();
@@ -434,7 +425,7 @@ scene::IMeshBuffer* cloneMeshBuffer(scene::IMeshBuffer *mesh_buffer)
 	}
 	case video::EVT_TANGENTS: {
 		video::S3DVertexTangents *v =
-			(video::S3DVertexTangents*)mesh_buffer->getVertices();
+			static_cast<video::S3DVertexTangents*>(mesh_buffer->getVertices());
 		u16 *indices = mesh_buffer->getIndices();
 		scene::SMeshBufferTangents *cloned_buffer =
 			new scene::SMeshBufferTangents();

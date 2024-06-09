@@ -850,7 +850,7 @@ bool MapBlockMesh::animate(bool faraway, float time, int crack,
 			mesh->setDirty(scene::EBT_VERTEX); // force reload to VBO
 			scene::IMeshBuffer *buf = mesh->
 				getMeshBuffer(daynight_diff.first.second);
-			video::S3DVertexTangents *vertices = (video::S3DVertexTangents*)buf->getVertices();
+			video::S3DVertexTangents *vertices = static_cast<video::S3DVertexTangents*>(buf->getVertices());
 
 			for (const auto &j : daynight_diff.second)
 				final_color_blend(&(vertices[j.first].Color), j.second,
