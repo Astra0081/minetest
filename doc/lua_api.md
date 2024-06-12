@@ -294,7 +294,7 @@ depends on by supplying a file with an equal name.
 Of the model file formats, only a subset is supported:
 
 Simple textured meshes (with multiple textures), optionally with normals.
-The .x and .b3d formats additionally support skeletal animation.
+The .x, .b3d and .gltf formats additionally support (a single) skeletal animation.
 
 #### glTF
 
