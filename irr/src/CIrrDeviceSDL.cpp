@@ -93,6 +93,7 @@ EM_BOOL CIrrDeviceSDL::MouseEnterCallback(int eventType, const EmscriptenMouseEv
 	SEvent irrevent;
 
 	irrevent.EventType = irr::EET_MOUSE_INPUT_EVENT;
+	irrevent.MouseInput.Simulated = false;
 	irrevent.MouseInput.Event = irr::EMIE_MOUSE_ENTER_CANVAS;
 	This->MouseX = irrevent.MouseInput.X = mouseEvent->canvasX;
 	This->MouseY = irrevent.MouseInput.Y = mouseEvent->canvasY;
@@ -114,6 +115,7 @@ EM_BOOL CIrrDeviceSDL::MouseLeaveCallback(int eventType, const EmscriptenMouseEv
 	SEvent irrevent;
 
 	irrevent.EventType = irr::EET_MOUSE_INPUT_EVENT;
+	irrevent.MouseInput.Simulated = false;
 	irrevent.MouseInput.Event = irr::EMIE_MOUSE_LEAVE_CANVAS;
 	This->MouseX = irrevent.MouseInput.X = mouseEvent->canvasX;
 	This->MouseY = irrevent.MouseInput.Y = mouseEvent->canvasY;
@@ -723,6 +725,7 @@ bool CIrrDeviceSDL::run()
 			SDL_Keymod keymod = SDL_GetModState();
 
 			irrevent.EventType = irr::EET_MOUSE_INPUT_EVENT;
+			irrevent.MouseInput.Simulated = false;
 			irrevent.MouseInput.Event = irr::EMIE_MOUSE_MOVED;
 			MouseX = irrevent.MouseInput.X =
 				static_cast<s32>(SDL_event.motion.x * ScaleX);
@@ -741,6 +744,7 @@ bool CIrrDeviceSDL::run()
 			SDL_Keymod keymod = SDL_GetModState();
 
 			irrevent.EventType = irr::EET_MOUSE_INPUT_EVENT;
+			irrevent.MouseInput.Simulated = false;
 			irrevent.MouseInput.Event = irr::EMIE_MOUSE_WHEEL;
 #if SDL_VERSION_ATLEAST(2, 0, 18)
 			irrevent.MouseInput.Wheel = SDL_event.wheel.preciseY;
@@ -761,6 +765,7 @@ bool CIrrDeviceSDL::run()
 			SDL_Keymod keymod = SDL_GetModState();
 
 			irrevent.EventType = irr::EET_MOUSE_INPUT_EVENT;
+			irrevent.MouseInput.Simulated = false;
 			irrevent.MouseInput.X = static_cast<s32>(SDL_event.button.x * ScaleX);
 			irrevent.MouseInput.Y = static_cast<s32>(SDL_event.button.y * ScaleY);
 			irrevent.MouseInput.Shift = (keymod & KMOD_SHIFT) != 0;
