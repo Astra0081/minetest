@@ -45,22 +45,23 @@ static scene::IMesh *createExtrusionMesh(int resolution_x, int resolution_y)
 {
 	const f32 r = 0.5;
 
-	scene::SMeshBufferTangents *buf = new scene::SMeshBufferTangents();
+	scene::IMeshBuffer *buf = new scene::SMeshBuffer();
 	video::SColor c(255,255,255,255);
 	v3f scale(1.0, 1.0, 0.1);
 
+	// Front and back
 	{
-		video::S3DVertexTangents vertices[8] = {
+		video::S3DVertex vertices[8] = {
 			// z-
-			video::S3DVertexTangents(-r,+r,-r, 0,0,-1, c, 0,0),
-			video::S3DVertexTangents(+r,+r,-r, 0,0,-1, c, 1,0),
-			video::S3DVertexTangents(+r,-r,-r, 0,0,-1, c, 1,1),
-			video::S3DVertexTangents(-r,-r,-r, 0,0,-1, c, 0,1),
+			video::S3DVertex(-r,+r,-r, 0,0,-1, c, 0,0),
+			video::S3DVertex(+r,+r,-r, 0,0,-1, c, 1,0),
+			video::S3DVertex(+r,-r,-r, 0,0,-1, c, 1,1),
+			video::S3DVertex(-r,-r,-r, 0,0,-1, c, 0,1),
 			// z+
-			video::S3DVertexTangents(-r,+r,+r, 0,0,+1, c, 0,0),
-			video::S3DVertexTangents(-r,-r,+r, 0,0,+1, c, 0,1),
-			video::S3DVertexTangents(+r,-r,+r, 0,0,+1, c, 1,1),
-			video::S3DVertexTangents(+r,+r,+r, 0,0,+1, c, 1,0),
+			video::S3DVertex(-r,+r,+r, 0,0,+1, c, 0,0),
+			video::S3DVertex(-r,-r,+r, 0,0,+1, c, 0,1),
+			video::S3DVertex(+r,-r,+r, 0,0,+1, c, 1,1),
+			video::S3DVertex(+r,+r,+r, 0,0,+1, c, 1,0),
 		};
 		u16 indices[12] = {0,1,2,2,3,0,4,5,6,6,7,4};
 		buf->append(vertices, 8, indices, 12);
@@ -75,17 +76,17 @@ static scene::IMesh *createExtrusionMesh(int resolution_x, int resolution_y)
 		f32 x1 = pixelpos_x + pixelsize_x;
 		f32 tex0 = (i + 0.1) * pixelsize_x;
 		f32 tex1 = (i + 0.9) * pixelsize_x;
-		video::S3DVertexTangents vertices[8] = {
+		video::S3DVertex vertices[8] = {
 			// x-
-			video::S3DVertexTangents(x0,-r,-r, -1,0,0, c, tex0,1),
-			video::S3DVertexTangents(x0,-r,+r, -1,0,0, c, tex1,1),
-			video::S3DVertexTangents(x0,+r,+r, -1,0,0, c, tex1,0),
-			video::S3DVertexTangents(x0,+r,-r, -1,0,0, c, tex0,0),
+			video::S3DVertex(x0,-r,-r, -1,0,0, c, tex0,1),
+			video::S3DVertex(x0,-r,+r, -1,0,0, c, tex1,1),
+			video::S3DVertex(x0,+r,+r, -1,0,0, c, tex1,0),
+			video::S3DVertex(x0,+r,-r, -1,0,0, c, tex0,0),
 			// x+
-			video::S3DVertexTangents(x1,-r,-r, +1,0,0, c, tex0,1),
-			video::S3DVertexTangents(x1,+r,-r, +1,0,0, c, tex0,0),
-			video::S3DVertexTangents(x1,+r,+r, +1,0,0, c, tex1,0),
-			video::S3DVertexTangents(x1,-r,+r, +1,0,0, c, tex1,1),
+			video::S3DVertex(x1,-r,-r, +1,0,0, c, tex0,1),
+			video::S3DVertex(x1,+r,-r, +1,0,0, c, tex0,0),
+			video::S3DVertex(x1,+r,+r, +1,0,0, c, tex1,0),
+			video::S3DVertex(x1,-r,+r, +1,0,0, c, tex1,1),
 		};
 		u16 indices[12] = {0,1,2,2,3,0,4,5,6,6,7,4};
 		buf->append(vertices, 8, indices, 12);
@@ -96,17 +97,17 @@ static scene::IMesh *createExtrusionMesh(int resolution_x, int resolution_y)
 		f32 y1 = -pixelpos_y;
 		f32 tex0 = (i + 0.1) * pixelsize_y;
 		f32 tex1 = (i + 0.9) * pixelsize_y;
-		video::S3DVertexTangents vertices[8] = {
+		video::S3DVertex vertices[8] = {
 			// y-
-			video::S3DVertexTangents(-r,y0,-r, 0,-1,0, c, 0,tex0),
-			video::S3DVertexTangents(+r,y0,-r, 0,-1,0, c, 1,tex0),
-			video::S3DVertexTangents(+r,y0,+r, 0,-1,0, c, 1,tex1),
-			video::S3DVertexTangents(-r,y0,+r, 0,-1,0, c, 0,tex1),
+			video::S3DVertex(-r,y0,-r, 0,-1,0, c, 0,tex0),
+			video::S3DVertex(+r,y0,-r, 0,-1,0, c, 1,tex0),
+			video::S3DVertex(+r,y0,+r, 0,-1,0, c, 1,tex1),
+			video::S3DVertex(-r,y0,+r, 0,-1,0, c, 0,tex1),
 			// y+
-			video::S3DVertexTangents(-r,y1,-r, 0,+1,0, c, 0,tex0),
-			video::S3DVertexTangents(-r,y1,+r, 0,+1,0, c, 0,tex1),
-			video::S3DVertexTangents(+r,y1,+r, 0,+1,0, c, 1,tex1),
-			video::S3DVertexTangents(+r,y1,-r, 0,+1,0, c, 1,tex0),
+			video::S3DVertex(-r,y1,-r, 0,+1,0, c, 0,tex0),
+			video::S3DVertex(-r,y1,+r, 0,+1,0, c, 0,tex1),
+			video::S3DVertex(+r,y1,+r, 0,+1,0, c, 1,tex1),
+			video::S3DVertex(+r,y1,-r, 0,+1,0, c, 1,tex0),
 		};
 		u16 indices[12] = {0,1,2,2,3,0,4,5,6,6,7,4};
 		buf->append(vertices, 8, indices, 12);
@@ -116,7 +117,7 @@ static scene::IMesh *createExtrusionMesh(int resolution_x, int resolution_y)
 	scene::SMesh *mesh = new scene::SMesh();
 	mesh->addMeshBuffer(buf);
 	buf->drop();
-	scaleMeshTangents(mesh, scale);  // also recalculates bounding box
+	scaleMesh(mesh, scale);  // also recalculates bounding box
 	return mesh;
 }
 
@@ -143,7 +144,7 @@ public:
 			m_extrusion_meshes[resolution] =
 				createExtrusionMesh(resolution, resolution);
 		}
-		m_cube = createCubeMeshTangents(v3f(1.0, 1.0, 1.0));
+		m_cube = createCubeMesh(v3f(1.0, 1.0, 1.0));
 	}
 	// Destructor
 	virtual ~ExtrusionMeshCache()
@@ -344,16 +345,14 @@ static scene::SMesh *createSpecialNodeMesh(Client *client, MapNode n,
 				p.layer.texture = frame.texture;
 				p.layer.normal_texture = frame.normal_texture;
 			}
-			std::vector<video::S3DVertexTangents> tangents;
 			for (video::S3DVertex &v : p.vertices) {
 				v.Color.setAlpha(255);
-				tangents.emplace_back(v);
 			}
-			scene::SMeshBufferTangents *buf = new scene::SMeshBufferTangents();
+			scene::SMeshBuffer *buf = new scene::SMeshBuffer();
 			buf->Material.setTexture(0, p.layer.texture);
 			p.layer.applyMaterialOptions(buf->Material);
 			mesh->addMeshBuffer(buf);
-			buf->append(&tangents[0], tangents.size(),
+			buf->append(&p.vertices[0], p.vertices.size(),
 					&p.indices[0], p.indices.size());
 			buf->drop();
 			colors->push_back(
@@ -375,7 +374,7 @@ void WieldMeshSceneNode::setItem(const ItemStack &item, Client *client, bool che
 	scene::SMesh *mesh = nullptr;
 
 	if (m_enable_shaders) {
-		u32 shader_id = shdrsrc->getShader("nodes_shader", TILE_MATERIAL_BASIC, NDT_NORMAL);
+		u32 shader_id = shdrsrc->getShader("object_shader", TILE_MATERIAL_BASIC, NDT_NORMAL);
 		m_material_type = shdrsrc->getShaderInfo(shader_id).material;
 	}
 
@@ -501,13 +500,14 @@ void WieldMeshSceneNode::setItem(const ItemStack &item, Client *client, bool che
 
 void WieldMeshSceneNode::setColor(video::SColor c)
 {
-	if (!m_meshnode)
-		return;
-
 	assert(!m_lighting);
 	scene::IMesh *mesh = m_meshnode->getMesh();
 	if (!mesh)
 		return;
+
+	u8 red = c.getRed();
+	u8 green = c.getGreen();
+	u8 blue = c.getBlue();
 
 	const u32 mc = mesh->getMeshBufferCount();
 	if (mc > m_colors.size())
@@ -515,23 +515,18 @@ void WieldMeshSceneNode::setColor(video::SColor c)
 	for (u32 j = 0; j < mc; j++) {
 		video::SColor bc(m_base_color);
 		m_colors[j].applyOverride(bc);
-
-		scene::IMeshBuffer *buf = mesh->getMeshBuffer(j);
-
 		video::SColor buffercolor(255,
-			bc.getRed() * c.getRed() / 255,
-			bc.getGreen() * c.getGreen() / 255,
-			bc.getBlue() * c.getBlue() / 255);
+			bc.getRed() * red / 255,
+			bc.getGreen() * green / 255,
+			bc.getBlue() * blue / 255);
+		scene::IMeshBuffer *buf = mesh->getMeshBuffer(j);
 
 		if (m_colors[j].needColorize(buffercolor)) {
 			buf->setDirty(scene::EBT_VERTEX);
-			if (m_enable_shaders) {
-				setMeshBufferTangentsColor(buf,
-					video::SColor(255, c.getRed(), c.getGreen(), c.getBlue()),
-					video::SColor(255, bc.getRed() / 255, bc.getGreen() / 255, bc.getBlue() / 255));
-			}
+			if (m_enable_shaders)
+				setMeshBufferColor(buf, buffercolor);
 			else
-				colorizeMeshBufferTangents(buf, &buffercolor);
+				colorizeMeshBuffer(buf, &buffercolor);
 		}
 	}
 }
@@ -624,15 +619,15 @@ void getItemMesh(Client *client, const ItemStack &item, ItemMesh *result)
 			mesh = cloneMesh(cube);
 			cube->drop();
 			if (f.drawtype == NDT_FLOWINGLIQUID) {
-				scaleMeshTangents(mesh, v3f(1.2, 0.03, 1.2));
-				translateMeshTangents(mesh, v3f(0, -0.57, 0));
+				scaleMesh(mesh, v3f(1.2, 0.03, 1.2));
+				translateMesh(mesh, v3f(0, -0.57, 0));
 			} else
-				scaleMeshTangents(mesh, v3f(1.2, 1.2, 1.2));
+				scaleMesh(mesh, v3f(1.2, 1.2, 1.2));
 			// add overlays
 			postProcessNodeMesh(mesh, f, false, false, nullptr,
 				&result->buffer_colors, true);
 			if (f.drawtype == NDT_ALLFACES)
-				scaleMeshTangents(mesh, v3f(f.visual_scale));
+				scaleMesh(mesh, v3f(f.visual_scale));
 			break;
 		}
 		case NDT_PLANTLIKE: {
@@ -661,7 +656,7 @@ void getItemMesh(Client *client, const ItemStack &item, ItemMesh *result)
 				n.setParam2(*def.place_param2);
 
 			mesh = createSpecialNodeMesh(client, n, &result->buffer_colors, f);
-			scaleMeshTangents(mesh, v3f(0.12, 0.12, 0.12));
+			scaleMesh(mesh, v3f(0.12, 0.12, 0.12));
 			break;
 		}
 		}
@@ -679,8 +674,8 @@ void getItemMesh(Client *client, const ItemStack &item, ItemMesh *result)
 			material.Lighting = false;
 		}
 
-		rotateMeshTangentsXZby(mesh, -45);
-		rotateMeshTangentsYZby(mesh, -30);
+		rotateMeshXZby(mesh, -45);
+		rotateMeshYZby(mesh, -30);
 	}
 
 	// might need to be re-colorized, this is done only when needed
@@ -733,7 +728,7 @@ scene::SMesh *getExtrudedMesh(ITextureSource *tsrc,
 		material.MaterialType = video::EMT_TRANSPARENT_ALPHA_CHANNEL;
 		material.MaterialTypeParam = 0.5f;
 	}
-	scaleMeshTangents(mesh, v3f(2.0, 2.0, 2.0));
+	scaleMesh(mesh, v3f(2.0, 2.0, 2.0));
 
 	return mesh;
 }

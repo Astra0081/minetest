@@ -38,7 +38,6 @@ varying vec3 vPosition;
 // precision must be considered).
 varying vec3 worldPosition;
 varying lowp vec4 varColor;
-varying lowp vec3 hwColor;
 #ifdef GL_ES
 varying mediump vec2 varTexCoord;
 #else
@@ -376,7 +375,7 @@ void main(void)
 #endif
 
 	color = base.rgb;
-	vec4 col = vec4(color * hwColor * varColor.rgb, 1.0);
+	vec4 col = vec4(color.rgb * varColor.rgb, 1.0);
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
 	if (f_shadow_strength > 0.0) {

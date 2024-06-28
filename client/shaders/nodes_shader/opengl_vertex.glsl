@@ -17,7 +17,6 @@ varying vec3 vPosition;
 // precision must be considered).
 varying vec3 worldPosition;
 varying lowp vec4 varColor;
-varying lowp vec3 hwColor;
 // The centroid keyword ensures that after interpolation the texture coordinates
 // lie within the same bounds when MSAA is en- and disabled.
 // This fixes the stripes problem with nearest-neighbor textures and MSAA.
@@ -226,8 +225,6 @@ void main(void)
 	color.rgb += ambientLight;
 
 	varColor = clamp(color, 0.0, 1.0);
-
-	hwColor = inVertexTangent.xyz;
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
 	if (f_shadow_strength > 0.0) {

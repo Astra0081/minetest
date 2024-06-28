@@ -38,33 +38,27 @@ void applyFacesShading(video::SColor &color, const v3f &normal);
 */
 scene::IAnimatedMesh* createCubeMesh(v3f scale);
 
-scene::IAnimatedMesh* createCubeMeshTangents(v3f scale);
-
 /*
 	Multiplies each vertex coordinate by the specified scaling factors
 	(componentwise vector multiplication).
 */
 void scaleMesh(scene::IMesh *mesh, v3f scale);
-void scaleMeshTangents(scene::IMesh *mesh, v3f scale);
 
 /*
 	Translate each vertex coordinate by the specified vector.
 */
-void translateMeshTangents(scene::IMesh *mesh, v3f vec);
+void translateMesh(scene::IMesh *mesh, v3f vec);
 
 /*!
  * Sets a constant color for all vertices in the mesh buffer.
  */
 void setMeshBufferColor(scene::IMeshBuffer *buf, const video::SColor &color);
-void setMeshBufferTangentsColor(scene::IMeshBuffer *buf,
-	const video::SColor &color, const video::SColor &hw_color=video::SColor(0xFFFFFFFF));
 
 /*
 	Set a constant color for all vertices in the mesh
 */
 void setMeshColor(scene::IMesh *mesh, const video::SColor &color);
-void setMeshTangentsColor(scene::IMesh *mesh, const video::SColor &color,
-	const video::SColor &hw_color=video::SColor(0xFFFFFFFF));
+
 
 /*
 	Sets texture coords for vertices in the mesh buffer.
@@ -81,7 +75,18 @@ void setAnimatedMeshColor(scene::IAnimatedMeshSceneNode *node, const video::SCol
  * Overwrites the color of a mesh buffer.
  * The color is darkened based on the normal vector of the vertices.
  */
-void colorizeMeshBufferTangents(scene::IMeshBuffer *buf, const video::SColor *buffercolor);
+void colorizeMeshBuffer(scene::IMeshBuffer *buf, const video::SColor *buffercolor);
+
+/*
+	Set the color of all vertices in the mesh.
+	For each vertex, determine the largest absolute entry in
+	the normal vector, and choose one of colorX, colorY or
+	colorZ accordingly.
+*/
+void setMeshColorByNormalXYZ(scene::IMesh *mesh,
+		const video::SColor &colorX,
+		const video::SColor &colorY,
+		const video::SColor &colorZ);
 
 void setMeshColorByNormal(scene::IMesh *mesh, const v3f &normal,
 		const video::SColor &color);
@@ -97,9 +102,7 @@ void rotateMeshBy6dFacedir(scene::IMesh *mesh, int facedir);
 */
 void rotateMeshXYby (scene::IMesh *mesh, f64 degrees);
 void rotateMeshXZby (scene::IMesh *mesh, f64 degrees);
-void rotateMeshTangentsXZby(scene::IMesh *mesh, f64 degrees);
 void rotateMeshYZby (scene::IMesh *mesh, f64 degrees);
-void rotateMeshTangentsYZby(scene::IMesh *mesh, f64 degrees);
 
 /*
  *  Clone the mesh buffer.
@@ -136,5 +139,5 @@ bool checkMeshNormals(scene::IMesh *mesh);
 	Set the MinFilter, MagFilter and AnisotropicFilter properties of a texture
 	layer according to the three relevant boolean values found in the Minetest
 	settings.
-*/
+*/ 
 void setMaterialFilters(video::SMaterialLayer &tex, bool bilinear, bool trilinear, bool anisotropic);

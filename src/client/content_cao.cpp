@@ -922,11 +922,11 @@ void GenericCAO::setNodeLight(const video::SColor &light_color)
 {
 	if (m_prop.visual == "wielditem" || m_prop.visual == "item") {
 		if (m_wield_meshnode)
-			m_wield_meshnode->setColor(light_color);
+			m_wield_meshnode->setNodeLightColor(light_color);
 		return;
 	}
 
-	/*if (m_enable_shaders) {
+	if (m_enable_shaders) {
 		if (m_prop.visual == "upright_sprite") {
 			if (!m_meshnode)
 				return;
@@ -942,7 +942,7 @@ void GenericCAO::setNodeLight(const video::SColor &light_color)
 				material.EmissiveColor = light_color;
 			}
 		}
-	} else {*/
+	} else {
 		if (m_meshnode) {
 			setMeshColor(m_meshnode->getMesh(), light_color);
 		} else if (m_animated_meshnode) {
@@ -950,7 +950,7 @@ void GenericCAO::setNodeLight(const video::SColor &light_color)
 		} else if (m_spritenode) {
 			m_spritenode->setColor(light_color);
 		}
-	//}
+	}
 }
 
 u16 GenericCAO::getLightPosition(v3s16 *pos)
