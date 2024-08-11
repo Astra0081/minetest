@@ -96,12 +96,13 @@ struct LoadingBlockModifierDef
 
 	virtual ~LoadingBlockModifierDef() = default;
 
-	// temporary
-	template <typename T>
-	void trigger2(ServerEnvironment *env, MapBlock *block, content_t c, const T &positions, float dtime_s);
-
-	virtual void trigger(ServerEnvironment *env, v3s16 p,
-			MapNode n, float dtime_s) {};
+	/// @brief Called to invoke LBM
+	/// @param env environment
+	/// @param block the block in question
+	/// @param positions set of node positions (block-relative!)
+	/// @param dtime_s game time since last deactivation
+	virtual void trigger(ServerEnvironment *env, MapBlock *block,
+		const std::unordered_set<v3s16> &positions, float dtime_s) {};
 };
 
 struct LBMContentMapping

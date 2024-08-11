@@ -247,21 +247,6 @@ std::string LBMManager::createIntroductionTimesString()
 	return oss.str();
 }
 
-template <typename T>
-void LoadingBlockModifierDef::trigger2(ServerEnvironment *env, MapBlock *block, content_t c, const T &positions, float dtime_s)
-{
-	const v3s16 pos_of_block = block->getPosRelative();
-	MapNode n;
-	for (v3s16 pos : positions) {
-		n = block->getNodeNoCheck(pos);
-		if (n.getContent() == c) {
-			trigger(env, pos_of_block + pos, n, dtime_s);
-			if (block->isOrphan())
-				return;
-		}
-	}
-}
-
 void LBMManager::applyLBMs(ServerEnvironment *env, MapBlock *block,
 		const u32 stamp, const float dtime_s)
 {
@@ -328,7 +313,7 @@ void LBMManager::applyLBMs(ServerEnvironment *env, MapBlock *block,
 			}
 			first = false;
 
-			lbm_def->trigger2(env, block, c, info.p, dtime_s);
+			lbm_def->trigger(env, block, info.p, dtime_s);
 			if (block->isOrphan())
 				return;
 		}

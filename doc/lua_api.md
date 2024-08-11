@@ -5444,6 +5444,8 @@ Utilities
       moveresult_new_pos = true,
       -- Allow removing definition fields in `minetest.override_item` (5.9.0)
       override_item_remove_fields = true,
+      -- Bulk LBM support (5.10.0)
+      bulk_lbms = true,
   }
   ```
 
@@ -9010,7 +9012,12 @@ gets activated (not loaded!)
     action = function(pos, node, dtime_s) end,
     -- Function triggered for each qualifying node.
     -- `dtime_s` is the in-game time (in seconds) elapsed since the block
-    -- was last active
+    -- was last active.
+
+    bulk_action = function(pos_list, dtime_s) end,
+    -- Function triggered with a list of all applicable node positions at once.
+    -- This can be set alternatively to `action` (not both). Available since 5.10.0.
+    -- `dtime_s`: see above
 }
 ```
 
