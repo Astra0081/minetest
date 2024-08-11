@@ -184,3 +184,27 @@ unittests.register("test_objects_in_area", function(_, pos)
 		return core.objects_in_area(pos:offset(-1, -1, -1), pos:offset(1, 1, 1))
 	end)
 end, {map=true})
+
+unittests.register("test_entity_cleared", function(_, pos)
+	log = {}
+
+	-- with binary in staticdata
+	local obj = core.add_entity(pos, "unittests:callbacks", "abc\000def")
+	check_log({"on_activate(7)"})
+
+	minetest.clear_objects({
+			mode = "soft",
+			callback = function (name, staticdata, params)
+					assert(params=="test")
+					return name == "unittests:callbacks"
+				end,
+			params = "test",
+		});
+
+	-- TODO: Should on_deactivate be called?
+	check_log({"on_deactivate(true)"});
+	--check_log({nil})
+
+	-- objectref must be invalid now
+	assert(obj:get_velocity() == nil)
+end, {map=true})
