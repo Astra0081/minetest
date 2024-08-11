@@ -96,6 +96,10 @@ struct LoadingBlockModifierDef
 
 	virtual ~LoadingBlockModifierDef() = default;
 
+	// temporary
+	template <typename T>
+	void trigger2(ServerEnvironment *env, MapBlock *block, content_t c, const T &positions, float dtime_s);
+
 	virtual void trigger(ServerEnvironment *env, v3s16 p,
 			MapNode n, float dtime_s) {};
 };
