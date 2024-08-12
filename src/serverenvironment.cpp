@@ -310,6 +310,8 @@ void LBMManager::applyLBMs(ServerEnvironment *env, MapBlock *block,
 					else
 						++it2;
 				}
+				if (info.p.empty())
+					break;
 			}
 			first = false;
 

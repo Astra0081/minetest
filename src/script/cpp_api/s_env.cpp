@@ -292,10 +292,6 @@ void ScriptApiEnv::readLBMs()
 		bool run_at_every_load = getboolfield_default(L, current_lbm,
 			"run_at_every_load", false);
 
-		lua_getfield(L, current_lbm, "action");
-		luaL_checktype(L, current_lbm + 1, LUA_TFUNCTION);
-		lua_pop(L, 1);
-
 		LuaLBM *lbm = new LuaLBM(id, trigger_contents, name,
 			run_at_every_load);
 
