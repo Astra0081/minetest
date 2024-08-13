@@ -19,9 +19,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #pragma once
 
-#include "enriched_string.h"
+#include "util/enriched_string.h"
 #include <utility>
-#include "client/fontengine.h"
+#include "fontengine.h"
 
 // Note this is client code, because of the draw function.
 

@@ -38,7 +38,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "script/scripting_client.h"
 #include "gettext.h"
 #include <SViewFrustum.h>
-#include "util/font_enriched_string_composite.h"
+#include "font_enriched_string_composite.h"
 
 #define CAMERA_OFFSET_STEP 200
 #define WIELDMESH_OFFSET_X 55.0f
