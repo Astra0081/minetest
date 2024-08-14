@@ -43,6 +43,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "util/srp.h"
 #include "clientdynamicinfo.h"
 
+#define CHECK_RELIABLE(pkt) \
+	if (!pkt->getWasReliable()) { actionstream << FUNCTION_NAME << ": Recieved an unreliable packet from peer_id = " << pkt->getPeerId() \
+	<< "user = \"" << getClient(pkt->getPeerId(), CS_Created)->getName() \
+	<< "\" when only a reliable packet would have been valid. Ignoring." << std::endl; return; }
+
 void Server::handleCommand_Deprecated(NetworkPacket* pkt)
 {
 	infostream << "Server: " << toServerCommandTable[pkt->getCommand()].name
@@ -51,6 +56,7 @@ void Server::handleCommand_Deprecated(NetworkPacket* pkt)
 
 void Server::handleCommand_Init(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
 
 	if(pkt->getSize() < 1)
 		return;
@@ -361,6 +367,8 @@ void Server::handleCommand_Init(NetworkPacket* pkt)
 
 void Server::handleCommand_Init2(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	session_t peer_id = pkt->getPeerId();
 	verbosestream << "Server: Got TOSERVER_INIT2 from " << peer_id << std::endl;
 
@@ -424,6 +432,8 @@ void Server::handleCommand_Init2(NetworkPacket* pkt)
 
 void Server::handleCommand_RequestMedia(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	std::unordered_set<std::string> tosend;
 	u16 numfiles;
 
@@ -448,6 +458,8 @@ void Server::handleCommand_RequestMedia(NetworkPacket* pkt)
 
 void Server::handleCommand_ClientReady(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	session_t peer_id = pkt->getPeerId();
 
 	// decode all information first
@@ -495,6 +507,8 @@ void Server::handleCommand_ClientReady(NetworkPacket* pkt)
 
 void Server::handleCommand_GotBlocks(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	if (pkt->getSize() < 1)
 		return;
 
@@ -583,6 +597,8 @@ void Server::process_PlayerPos(RemotePlayer *player, PlayerSAO *playersao,
 
 void Server::handleCommand_PlayerPos(NetworkPacket* pkt)
 {
+	/* unreliable packet */
+
 	session_t peer_id = pkt->getPeerId();
 	RemotePlayer *player = m_env->getPlayer(peer_id);
 	if (player == NULL) {
@@ -614,6 +630,8 @@ void Server::handleCommand_PlayerPos(NetworkPacket* pkt)
 
 void Server::handleCommand_DeletedBlocks(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	if (pkt->getSize() < 1)
 		return;
 
@@ -644,6 +662,8 @@ void Server::handleCommand_DeletedBlocks(NetworkPacket* pkt)
 
 void Server::handleCommand_InventoryAction(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	session_t peer_id = pkt->getPeerId();
 	RemotePlayer *player = m_env->getPlayer(peer_id);
 
@@ -822,6 +842,8 @@ void Server::handleCommand_InventoryAction(NetworkPacket* pkt)
 
 void Server::handleCommand_ChatMessage(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	std::wstring message;
 	*pkt >> message;
 
@@ -847,6 +869,8 @@ void Server::handleCommand_ChatMessage(NetworkPacket* pkt)
 
 void Server::handleCommand_Damage(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	u16 damage;
 
 	*pkt >> damage;
@@ -890,6 +914,8 @@ void Server::handleCommand_Damage(NetworkPacket* pkt)
 
 void Server::handleCommand_PlayerItem(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	if (pkt->getSize() < 2)
 		return;
 
@@ -931,6 +957,8 @@ void Server::handleCommand_PlayerItem(NetworkPacket* pkt)
 
 void Server::handleCommand_Respawn(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	session_t peer_id = pkt->getPeerId();
 	RemotePlayer *player = m_env->getPlayer(peer_id);
 	if (player == NULL) {
@@ -986,6 +1014,8 @@ static inline void getWieldedItem(const PlayerSAO *playersao, std::optional<Item
 
 void Server::handleCommand_Interact(NetworkPacket *pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	/*
 		[0] u16 command
 		[2] u8 action
@@ -1393,6 +1423,8 @@ void Server::handleCommand_Interact(NetworkPacket *pkt)
 
 void Server::handleCommand_RemovedSounds(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	u16 num;
 	*pkt >> num;
 	for (u16 k = 0; k < num; k++) {
@@ -1431,6 +1463,8 @@ static bool pkt_read_formspec_fields(NetworkPacket *pkt, StringMap &fields)
 
 void Server::handleCommand_NodeMetaFields(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	session_t peer_id = pkt->getPeerId();
 	RemotePlayer *player = m_env->getPlayer(peer_id);
 
@@ -1483,6 +1517,8 @@ void Server::handleCommand_NodeMetaFields(NetworkPacket* pkt)
 
 void Server::handleCommand_InventoryFields(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	session_t peer_id = pkt->getPeerId();
 	RemotePlayer *player = m_env->getPlayer(peer_id);
 
@@ -1546,6 +1582,8 @@ void Server::handleCommand_InventoryFields(NetworkPacket* pkt)
 
 void Server::handleCommand_FirstSrp(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	session_t peer_id = pkt->getPeerId();
 	RemoteClient *client = getClient(peer_id, CS_Invalid);
 	ClientState cstate = client->getState();
@@ -1635,6 +1673,8 @@ void Server::handleCommand_FirstSrp(NetworkPacket* pkt)
 
 void Server::handleCommand_SrpBytesA(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	session_t peer_id = pkt->getPeerId();
 	RemoteClient *client = getClient(peer_id, CS_Invalid);
 	ClientState cstate = client->getState();
@@ -1751,6 +1791,8 @@ void Server::handleCommand_SrpBytesA(NetworkPacket* pkt)
 
 void Server::handleCommand_SrpBytesM(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	session_t peer_id = pkt->getPeerId();
 	RemoteClient *client = getClient(peer_id, CS_Invalid);
 	ClientState cstate = client->getState();
@@ -1858,6 +1900,8 @@ void Server::handleCommand_SrpBytesM(NetworkPacket* pkt)
 
 void Server::handleCommand_ModChannelJoin(NetworkPacket *pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	std::string channel_name;
 	*pkt >> channel_name;
 
@@ -1883,6 +1927,8 @@ void Server::handleCommand_ModChannelJoin(NetworkPacket *pkt)
 
 void Server::handleCommand_ModChannelLeave(NetworkPacket *pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	std::string channel_name;
 	*pkt >> channel_name;
 
@@ -1907,6 +1953,8 @@ void Server::handleCommand_ModChannelLeave(NetworkPacket *pkt)
 
 void Server::handleCommand_ModChannelMsg(NetworkPacket *pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	std::string channel_name, channel_msg;
 	*pkt >> channel_name >> channel_msg;
 
@@ -1936,6 +1984,8 @@ void Server::handleCommand_ModChannelMsg(NetworkPacket *pkt)
 
 void Server::handleCommand_HaveMedia(NetworkPacket *pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	std::vector<u32> tokens;
 	u8 numtokens;
 
@@ -1963,6 +2013,8 @@ void Server::handleCommand_HaveMedia(NetworkPacket *pkt)
 
 void Server::handleCommand_UpdateClientInfo(NetworkPacket *pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	ClientDynamicInfo info;
 	*pkt >> info.render_target_size.X;
 	*pkt >> info.render_target_size.Y;
