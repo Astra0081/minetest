@@ -224,9 +224,17 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 		Add TOCLIENT_MOVE_PLAYER_REL
 		Move default minimap from client-side C++ to server-side builtin Lua
 		[scheduled bump for 5.9.0]
+	PROTOCOL VERSION 45:
+		Implement anonymous ECDHE key exchange to prevent passive eavesdropping with perfect forward secrecy.
+		Active attackers can still attack the protocol.
+		TOSERVER_INIT changes: include client ephemeral public key
+		TOCLIENT_HELLO changes: include server ephemeral public key
+		SRP state now includes the client and server ephemeral keys
+		TOCLIENT_AUTH_ACCEPT/TOCLIENT_ACCEPT_SUDO_MODE changes: Include the H/M_2 SRP response
+
 */
 
-#define LATEST_PROTOCOL_VERSION 44
+#define LATEST_PROTOCOL_VERSION 45
 #define LATEST_PROTOCOL_VERSION_STRING TOSTRING(LATEST_PROTOCOL_VERSION)
 
 // Server's supported network protocol range
@@ -237,11 +245,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define CLIENT_PROTOCOL_VERSION_MIN 37
 #define CLIENT_PROTOCOL_VERSION_MAX LATEST_PROTOCOL_VERSION
 
+// min protocol version to enable packet encryption for
+#define PROTOCOL_VERSION_ENCRYPTION 45
+
 // Constant that differentiates the protocol from random data and other protocols
 #define PROTOCOL_ID 0x4f457403
-
-#define PASSWORD_SIZE 28    // Maximum password length. Allows for
-                            // base64-encoded SHA-1 (27+\0).
 
 // See also formspec [Version History] in doc/lua_api.md
 #define FORMSPEC_API_VERSION 7
@@ -261,6 +269,7 @@ enum ToClientCommand : u16
 		u16 deployed protocol version
 		u32 supported auth methods
 		std::string username that should be used for legacy hash (for proper casing)
+		u8[32] echde_pub_key, server ephemeral curve25519 public key 
 	*/
 	TOCLIENT_AUTH_ACCEPT = 0x03,
 	/*
@@ -915,6 +924,7 @@ enum ToServerCommand : u16
 		u16 minimum supported network protocol version
 		u16 maximum supported network protocol version
 		std::string player name
+		u8[32] echde_pub_key, client ephemeral curve25519 public key
 	*/
 
 	TOSERVER_INIT2 = 0x11,

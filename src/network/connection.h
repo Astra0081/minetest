@@ -19,6 +19,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #pragma once
 
+#include "encryption.h"
 #include "irrlichttypes.h"
 #include "peerhandler.h"
 #include "socket.h"
@@ -93,12 +94,14 @@ struct ConnectionEvent
 	Buffer<u8> data;
 	bool timeout = false;
 	Address address;
+	bool encrypted = false;
+	bool reliable = false;
 
 	// We don't want to copy "data"
 	DISABLE_CLASS_COPY(ConnectionEvent);
 
 	static ConnectionEventPtr create(ConnectionEventType type);
-	static ConnectionEventPtr dataReceived(session_t peer_id, const Buffer<u8> &data);
+	static ConnectionEventPtr dataReceived(session_t peer_id, const Buffer<u8> &data, bool reliable, bool encrypted);
 	static ConnectionEventPtr peerAdded(session_t peer_id, Address address);
 	static ConnectionEventPtr peerRemoved(session_t peer_id, bool is_timeout, Address address);
 	static ConnectionEventPtr bindFailed();
@@ -118,6 +121,45 @@ typedef std::shared_ptr<BufferedPacket> BufferedPacketPtr;
 
 class Connection;
 class PeerHandler;
+
+struct SeqNumWithGen
+{
+	/*
+	* How many times has the seq_num counter overflown?
+	*
+	* Needed for IV calculcation for network encryption
+	*/
+	u64 generation_counter = 1;
+	// seq num for the network packet
+	u16 packet_seq_num = SEQNUM_INITIAL;
+
+	SeqNumWithGen next() const
+	{
+		u64 next_generation_counter = generation_counter;
+		// check for overflow and increment the generation counter if needed
+		// this is required to ensure unique IVs for encryption
+		if (packet_seq_num == std::numeric_limits<u16>::max())
+			next_generation_counter++;
+		u16 next_packet_seq_num = packet_seq_num + 1;
+
+		return { next_generation_counter, next_packet_seq_num };
+	}
+
+	bool operator==(const SeqNumWithGen& other) const
+	{
+		return this->generation_counter == other.generation_counter && this->packet_seq_num == other.packet_seq_num;
+	}
+
+	bool operator!=(const SeqNumWithGen& other) const
+	{
+		return !(*this == other);
+	}
+};
+
+inline std::ostream& operator<<(std::ostream& os, const SeqNumWithGen& seq) {
+	os << seq.packet_seq_num << " (generation: " << seq.generation_counter << ")";
+	return os;
+}
 
 class Peer {
 	public:
@@ -188,6 +230,34 @@ class Peer {
 			return -1;
 		}
 
+		bool setEncryptionKeys(NetworkEncryption::AESChannelKeys send_keys, NetworkEncryption::AESChannelKeys receive_keys)
+		{
+			verbosestream << "setEncryptionKeys(): keys set!" << std::endl;
+
+			m_send_keys = send_keys;
+			m_receive_keys = receive_keys;
+
+			m_enable_encryption = true;
+
+			return true;
+		}
+
+		bool disableEncryption()
+		{
+			verbosestream << "disableEncryption(): Encryption disabled!" << std::endl;
+
+			m_enable_encryption = false;
+
+			return true;
+		}
+
+		virtual bool decryptMessage(u8 channel_id, SeqNumWithGen seq_num, Buffer<u8> &data, bool &fatal_error) = 0;
+
+		bool isEncrypted() const
+		{
+			return m_enable_encryption;
+		}
+
 	protected:
 		Peer(session_t id, const Address &address, Connection *connection) :
 			id(id),
@@ -217,6 +287,11 @@ class Peer {
 
 		// Ping timer
 		float m_ping_timer = 0.0f;
+
+		bool m_enable_encryption = false;
+		NetworkEncryption::AESChannelKeys m_send_keys = {};
+		NetworkEncryption::AESChannelKeys m_receive_keys = {};
+		u32 m_decryption_failure_counter = 0;
 
 	private:
 		struct rttstats {
@@ -278,6 +353,8 @@ public:
 	session_t GetPeerID() const { return m_peer_id; }
 	Address GetPeerAddress(session_t peer_id);
 	float getPeerStat(session_t peer_id, rtt_stat_type type);
+	bool setEncryptionKeys(session_t peer_id, NetworkEncryption::AESChannelKeys send_keys, NetworkEncryption::AESChannelKeys receive_keys);
+	bool disableEncryption(session_t peer_id);
 	float getLocalStat(rate_stat_type type);
 	u32 GetProtocolID() const { return m_protocol_id; };
 	const std::string getDesc();

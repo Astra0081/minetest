@@ -24,6 +24,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 /********************************************/
 
 #include "connection.h"
+#include "networkconfig.h"
 
 #define MAX_UDP_PEERS 65535
 
@@ -44,7 +45,6 @@ channel:
 	Channel numbers have no intrinsic meaning. Currently only 0, 1, 2 exist.
 */
 #define BASE_HEADER_SIZE 7
-#define CHANNEL_COUNT 3
 
 /*
 Packet types:
@@ -111,7 +111,6 @@ with a buffer in the receiving and transmitting end.
 */
 //#define TYPE_RELIABLE 3
 #define RELIABLE_HEADER_SIZE 3
-#define SEQNUM_INITIAL 65500
 #define SEQNUM_MAX 65535
 
 namespace con
@@ -124,6 +123,13 @@ enum PacketType : u8 {
 	PACKET_TYPE_SPLIT = 2,
 	PACKET_TYPE_RELIABLE = 3,
 	PACKET_TYPE_MAX
+};
+
+enum PacketTypeFlag : u8
+{
+	PACKET_TYPE_FLAG_ENCRYTPED = 0x80,
+
+	PACKET_TYPE_FLAG_MASK = PACKET_TYPE_FLAG_ENCRYTPED
 };
 
 inline bool seqnum_higher(u16 totest, u16 base)
@@ -202,7 +208,7 @@ void makeAutoSplitPacket(const SharedBuffer<u8> &data, u32 chunksize_max,
 		u16 &split_seqnum, std::list<SharedBuffer<u8>> *list);
 
 // Add the TYPE_RELIABLE header to the data
-SharedBuffer<u8> makeReliablePacket(const SharedBuffer<u8> &data, u16 seqnum);
+SharedBuffer<u8> makeReliablePacket(const SharedBuffer<u8> &data, SeqNumWithGen seqnum, u8 channel, bool is_encrypted, const u8(*encryption_key)[NET_AES_KEY_SIZE]);
 
 struct IncomingSplitPacket
 {
@@ -225,6 +231,109 @@ struct IncomingSplitPacket
 private:
 	// Key is chunk number, value is data without headers
 	std::map<u16, SharedBuffer<u8>> chunks;
+};
+
+struct IncomingReliablePacket
+{
+	IncomingReliablePacket(session_t peer_id, SeqNumWithGen seq_num, bool encrypted, SharedBuffer<u8>&& data) :
+		m_peer_id(peer_id),
+		m_seq_num(seq_num),
+		m_encrypted(encrypted),
+		m_data(data)
+	{
+	}
+	IncomingReliablePacket() = delete;
+	IncomingReliablePacket(IncomingReliablePacket&) = delete;
+	IncomingReliablePacket& operator=(IncomingReliablePacket&) = delete;
+
+	IncomingReliablePacket(IncomingReliablePacket&& old) noexcept
+	{
+		m_peer_id = old.m_peer_id;
+		m_seq_num = old.m_seq_num;
+		m_encrypted = old.m_encrypted;
+		m_data = std::move(old.m_data);
+
+		old.m_peer_id = -1;
+		old.m_seq_num = {};
+		old.m_encrypted = false;
+		old.m_data = {};
+	}
+
+	u8 getPeerID() const
+	{
+		return m_peer_id;
+	}
+
+	SeqNumWithGen getSeqnum() const
+	{
+		return m_seq_num;
+	}
+
+	bool getIsEncrypted() const
+	{
+		return m_encrypted;
+	}
+
+	const SharedBuffer<u8>& getData() const
+	{
+		return m_data;
+	}
+
+private:
+	session_t m_peer_id;
+	SeqNumWithGen m_seq_num;
+	bool m_encrypted;
+	SharedBuffer<u8> m_data;
+};
+
+class ReliableIncomingPacketBuffer
+{
+public:
+	bool getFirstSeqnum(SeqNumWithGen& result)
+	{
+		MutexAutoLock listlock(m_list_mutex);
+		if (m_list.empty())
+			return false;
+		result = m_list.front().getSeqnum();
+		return true;
+	}
+
+	IncomingReliablePacket popFirst()
+	{
+		MutexAutoLock listlock(m_list_mutex);
+		if (m_list.empty())
+			throw NotFoundException("Buffer is empty");
+
+		IncomingReliablePacket p(std::move(m_list.front()));
+		m_list.pop_front();
+
+		return p;
+	}
+	void insert(IncomingReliablePacket&& packet, SeqNumWithGen next_expected);
+	void insert(session_t peer_id, SeqNumWithGen seq_num, bool encrypted, const SeqNumWithGen next_expected, Buffer<u8>&& data)
+	{
+		IncomingReliablePacket packet = { peer_id, seq_num, encrypted, std::move(data) };
+		insert(std::move(packet), next_expected);
+	}
+
+	bool empty()
+	{
+		MutexAutoLock listlock(m_list_mutex);
+
+		return m_list.empty();
+	}
+	u32 size()
+	{
+		MutexAutoLock listlock(m_list_mutex);
+
+		return m_list.size();
+	}
+
+
+private:
+	std::list<IncomingReliablePacket> m_list;
+
+	std::mutex m_list_mutex;
 };
 
 /*
@@ -310,6 +419,7 @@ struct ConnectionCommand
 	Buffer<u8> data;
 	bool reliable = false;
 	bool raw = false;
+	bool force_disable_encryption = false;
 
 	DISABLE_CLASS_COPY(ConnectionCommand);
 
@@ -339,23 +449,25 @@ private:
 /* minimum value for window size */
 #define MIN_RELIABLE_WINDOW_SIZE 0x40
 
+#define MAX_DECRYPTION_FAILURE_COUNT 30
+
 class Channel
 {
 
 public:
-	u16 readNextIncomingSeqNum();
-	u16 incNextIncomingSeqNum();
+	SeqNumWithGen readNextIncomingSeqNum();
+	SeqNumWithGen incNextIncomingSeqNum();
 
-	u16 getOutgoingSequenceNumber(bool& successful);
-	u16 readOutgoingSequenceNumber();
-	bool putBackSequenceNumber(u16);
+	SeqNumWithGen getOutgoingSequenceNumber(bool& successful);
+	SeqNumWithGen readOutgoingSequenceNumber();
+	bool putBackSequenceNumber(SeqNumWithGen);
 
 	u16 readNextSplitSeqNum();
 	void setNextSplitSeqNum(u16 seqnum);
 
 	// This is for buffering the incoming packets that are coming in
 	// the wrong order
-	ReliablePacketBuffer incoming_reliables;
+	ReliableIncomingPacketBuffer incoming_reliables;
 	// This is for buffering the sent packets so that the sender can
 	// re-send them if no ACK is received
 	ReliablePacketBuffer outgoing_reliables_sent;
@@ -412,9 +524,8 @@ private:
 	std::mutex m_internal_mutex;
 	u16 m_window_size = MIN_RELIABLE_WINDOW_SIZE;
 
-	u16 next_incoming_seqnum = SEQNUM_INITIAL;
-
-	u16 next_outgoing_seqnum = SEQNUM_INITIAL;
+	SeqNumWithGen next_incoming_seqnum;
+	SeqNumWithGen next_outgoing_seqnum;
 	u16 next_outgoing_split_seqnum = SEQNUM_INITIAL;
 
 	unsigned int current_packet_loss = 0;
@@ -467,6 +578,8 @@ public:
 
 	bool isTimedOut(float timeout, std::string &reason) override;
 
+	bool decryptMessage(u8 channel_id, SeqNumWithGen seq_num, Buffer<u8>& data, bool& fatal_error) override;
+
 protected:
 	/*
 		Calculates avg_rtt and resend_timeout.
@@ -491,6 +604,8 @@ protected:
 private:
 	// This is changed dynamically
 	float resend_timeout = 0.5;
+
+	bool m_has_fatal_encryption_error = false;
 
 	bool processReliableSendCommand(
 					ConnectionCommandPtr &c_ptr,
