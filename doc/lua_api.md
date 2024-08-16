@@ -5464,7 +5464,7 @@ Utilities
       -- Allow removing definition fields in `minetest.override_item` (5.9.0)
       override_item_remove_fields = true,
       -- HUD elements of type hotbar exist and
-      -- the predefined hotbar is a Lua HUD elements. (5.9.0)
+      -- the predefined hotbar is a Lua HUD elements. (5.10.0)
       hotbar_hud_element = true,
   }
   ```
