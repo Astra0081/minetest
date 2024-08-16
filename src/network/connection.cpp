@@ -1230,11 +1230,12 @@ ConnectionEventPtr ConnectionEvent::create(ConnectionEventType type)
 	return std::shared_ptr<ConnectionEvent>(new ConnectionEvent(type));
 }
 
-ConnectionEventPtr ConnectionEvent::dataReceived(session_t peer_id, const Buffer<u8> &data)
+ConnectionEventPtr ConnectionEvent::dataReceived(session_t peer_id, const Buffer<u8>& data, bool reliable)
 {
 	auto e = create(CONNEVENT_DATA_RECEIVED);
 	e->peer_id = peer_id;
 	data.copyTo(e->data);
+	e->reliable = reliable;
 	return e;
 }
 
@@ -1465,6 +1466,8 @@ bool Connection::ReceiveTimeoutMs(NetworkPacket *pkt, u32 timeout_ms)
 			}
 
 			pkt->putRawPacket(*e.data, e.data.getSize(), e.peer_id);
+			pkt->setRecievedData(e.reliable);
+
 			return true;
 		case CONNEVENT_PEER_ADDED: {
 			UDPPeer tmp(e.peer_id, e.address, this);

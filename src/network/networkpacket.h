@@ -50,6 +50,14 @@ public:
 	u32 getRemainingBytes() const { return m_datasize - m_read_offset; }
 	const char *getRemainingString() { return getString(m_read_offset); }
 
+	// getters only valid for recieved packets
+	bool getWasReliable() const { return m_was_reliable; }
+
+	void setRecievedData(bool reliable)
+	{
+		m_was_reliable = reliable;
+	}
+
 	// Returns a c-string without copying.
 	// A better name for this would be getRawString()
 	const char *getString(u32 from_offset) const;
@@ -140,4 +148,7 @@ private:
 	u32 m_read_offset = 0;
 	u16 m_command = 0;
 	session_t m_peer_id = 0;
+
+	// recieved packet
+	bool m_was_reliable = false;
 };
