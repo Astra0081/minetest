@@ -43,6 +43,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "util/srp.h"
 #include "clientdynamicinfo.h"
 
+#define CHECK_RELIABLE(pkt) \
+	if (!pkt->getWasReliable()) { actionstream << FUNCTION_NAME << ": Recieved an unreliable packet from peer_id = " << pkt->getPeerId() \
+	<< "user = \"" << getClient(pkt->getPeerId(), CS_Created)->getName() \
+	<< "\" when only a reliable packet would have been valid. Ignoring." << std::endl; return; }
+
 void Server::handleCommand_Deprecated(NetworkPacket* pkt)
 {
 	infostream << "Server: " << toServerCommandTable[pkt->getCommand()].name
@@ -51,6 +56,7 @@ void Server::handleCommand_Deprecated(NetworkPacket* pkt)
 
 void Server::handleCommand_Init(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
 
 	if(pkt->getSize() < 1)
 		return;
@@ -70,7 +76,7 @@ void Server::handleCommand_Init(NetworkPacket* pkt)
 		 * respond for some time, your server was overloaded or
 		 * things like that.
 		 */
-		infostream << "Server::ProcessData(): Canceling: peer " << peer_id <<
+		infostream << "Server::handleCommand_Init(): Canceling: peer " << peer_id <<
 			" not found" << std::endl;
 		return;
 	}
@@ -156,6 +162,17 @@ void Server::handleCommand_Init(NetworkPacket* pkt)
 			addr_s << " proto_max=" << (int)max_net_proto_version << std::endl;
 		DenyAccess(peer_id, SERVER_ACCESSDENIED_WRONG_VERSION);
 		return;
+	}
+
+	bool client_supports_wire_encryption = net_proto_version >= PROTOCOL_VERSION_ENCRYPTION;
+	NetworkEncryption::ECDHEPublicKey client_pub_key = {};
+	if (client_supports_wire_encryption) {
+		pkt->readRawData(client_pub_key.key, sizeof(client_pub_key.key));
+
+		verbosestream << "Server received INIT with client public key!" << std::endl;
+	}
+	else {
+		verbosestream << "Server received INIT from old client that doesn't support encryption." << std::endl;
 	}
 
 	/*
@@ -272,6 +289,53 @@ void Server::handleCommand_Init(NetworkPacket* pkt)
 		}
 	}
 
+	NetworkEncryption::ECDHEKeyPair server_key = {};
+	if (client_supports_wire_encryption)
+	{
+		verbosestream << "Generating server ephemeral key for client: " << peer_id << std::endl;
+
+		bool key_generated = false;
+
+		{
+			std::lock_guard lock{ m_keygen_lock };
+			key_generated = m_keygen.generate(server_key);
+		}
+
+		if (!key_generated)
+		{
+			errorstream << "Failed to generate network encryption ECDHE keypair! Denying access to player: " <<
+				playername <<
+				"(" << peer_id << ") connecting from: " << addr_s << std::endl;
+			DenyAccess(peer_id, SERVER_ACCESSDENIED_CRASH);
+		}
+
+		NetworkEncryption::AESChannelKeys  client_send_keys = {};
+		NetworkEncryption::AESChannelKeys  server_send_keys = {};
+		NetworkEncryption::HandshakeDigest handshake_digest = {};
+
+		if (!NetworkEncryption::derive_subkeys(server_key, client_pub_key, client_send_keys, server_send_keys, handshake_digest))
+		{
+			errorstream << "Failed to derive channel encryption keys! Denying access to player: " <<
+				playername <<
+				"(" << peer_id << ") connecting from: " << addr_s << std::endl;
+			DenyAccess(peer_id, SERVER_ACCESSDENIED_CRASH);
+		}
+
+		// set encryption keys
+		if (!m_con->setEncryptionKeys(pkt->getPeerId(), server_send_keys, client_send_keys))
+		{
+			m_con->disableEncryption(pkt->getPeerId());
+
+			errorstream << "Failed to set network encryption keys! Denying access to player: " <<
+				playername <<
+				"(" << peer_id << ") connecting from: " << addr_s << std::endl;
+			DenyAccess(peer_id, SERVER_ACCESSDENIED_CRASH);
+		}
+
+		// set the client state
+		client->setEphemeralKeyState(client_pub_key, server_key, handshake_digest);
+	}
+
 	/*
 		Answer with a TOCLIENT_HELLO
 	*/
@@ -280,11 +344,18 @@ void Server::handleCommand_Init(NetworkPacket* pkt)
 		<< auth_mechs << std::endl;
 
 	NetworkPacket resp_pkt(TOCLIENT_HELLO,
-		1 + 4 + legacyPlayerNameCasing.size(), peer_id);
+		1 + 4 + legacyPlayerNameCasing.size() + sizeof(server_key.public_key), peer_id);
 
 	u16 depl_compress_mode = NETPROTO_COMPRESSION_NONE;
 	resp_pkt << depl_serial_v << depl_compress_mode << net_proto_version
 		<< auth_mechs << legacyPlayerNameCasing;
+
+	if (client_supports_wire_encryption)
+	{
+		resp_pkt.putRawData(&server_key.public_key[0], sizeof(server_key.public_key));
+	}
+
+	resp_pkt.disableEncryption();
 
 	Send(&resp_pkt);
 
@@ -296,6 +367,8 @@ void Server::handleCommand_Init(NetworkPacket* pkt)
 
 void Server::handleCommand_Init2(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	session_t peer_id = pkt->getPeerId();
 	verbosestream << "Server: Got TOSERVER_INIT2 from " << peer_id << std::endl;
 
@@ -359,6 +432,8 @@ void Server::handleCommand_Init2(NetworkPacket* pkt)
 
 void Server::handleCommand_RequestMedia(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	std::unordered_set<std::string> tosend;
 	u16 numfiles;
 
@@ -383,6 +458,8 @@ void Server::handleCommand_RequestMedia(NetworkPacket* pkt)
 
 void Server::handleCommand_ClientReady(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	session_t peer_id = pkt->getPeerId();
 
 	// decode all information first
@@ -430,6 +507,8 @@ void Server::handleCommand_ClientReady(NetworkPacket* pkt)
 
 void Server::handleCommand_GotBlocks(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	if (pkt->getSize() < 1)
 		return;
 
@@ -518,6 +597,8 @@ void Server::process_PlayerPos(RemotePlayer *player, PlayerSAO *playersao,
 
 void Server::handleCommand_PlayerPos(NetworkPacket* pkt)
 {
+	/* unreliable packet */
+
 	session_t peer_id = pkt->getPeerId();
 	RemotePlayer *player = m_env->getPlayer(peer_id);
 	if (player == NULL) {
@@ -549,6 +630,8 @@ void Server::handleCommand_PlayerPos(NetworkPacket* pkt)
 
 void Server::handleCommand_DeletedBlocks(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	if (pkt->getSize() < 1)
 		return;
 
@@ -579,6 +662,8 @@ void Server::handleCommand_DeletedBlocks(NetworkPacket* pkt)
 
 void Server::handleCommand_InventoryAction(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	session_t peer_id = pkt->getPeerId();
 	RemotePlayer *player = m_env->getPlayer(peer_id);
 
@@ -757,6 +842,8 @@ void Server::handleCommand_InventoryAction(NetworkPacket* pkt)
 
 void Server::handleCommand_ChatMessage(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	std::wstring message;
 	*pkt >> message;
 
@@ -782,6 +869,8 @@ void Server::handleCommand_ChatMessage(NetworkPacket* pkt)
 
 void Server::handleCommand_Damage(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	u16 damage;
 
 	*pkt >> damage;
@@ -825,6 +914,8 @@ void Server::handleCommand_Damage(NetworkPacket* pkt)
 
 void Server::handleCommand_PlayerItem(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	if (pkt->getSize() < 2)
 		return;
 
@@ -866,6 +957,8 @@ void Server::handleCommand_PlayerItem(NetworkPacket* pkt)
 
 void Server::handleCommand_Respawn(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	session_t peer_id = pkt->getPeerId();
 	RemotePlayer *player = m_env->getPlayer(peer_id);
 	if (player == NULL) {
@@ -921,6 +1014,8 @@ static inline void getWieldedItem(const PlayerSAO *playersao, std::optional<Item
 
 void Server::handleCommand_Interact(NetworkPacket *pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	/*
 		[0] u16 command
 		[2] u8 action
@@ -1328,6 +1423,8 @@ void Server::handleCommand_Interact(NetworkPacket *pkt)
 
 void Server::handleCommand_RemovedSounds(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	u16 num;
 	*pkt >> num;
 	for (u16 k = 0; k < num; k++) {
@@ -1366,6 +1463,8 @@ static bool pkt_read_formspec_fields(NetworkPacket *pkt, StringMap &fields)
 
 void Server::handleCommand_NodeMetaFields(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	session_t peer_id = pkt->getPeerId();
 	RemotePlayer *player = m_env->getPlayer(peer_id);
 
@@ -1418,6 +1517,8 @@ void Server::handleCommand_NodeMetaFields(NetworkPacket* pkt)
 
 void Server::handleCommand_InventoryFields(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	session_t peer_id = pkt->getPeerId();
 	RemotePlayer *player = m_env->getPlayer(peer_id);
 
@@ -1481,6 +1582,8 @@ void Server::handleCommand_InventoryFields(NetworkPacket* pkt)
 
 void Server::handleCommand_FirstSrp(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	session_t peer_id = pkt->getPeerId();
 	RemoteClient *client = getClient(peer_id, CS_Invalid);
 	ClientState cstate = client->getState();
@@ -1570,6 +1673,8 @@ void Server::handleCommand_FirstSrp(NetworkPacket* pkt)
 
 void Server::handleCommand_SrpBytesA(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	session_t peer_id = pkt->getPeerId();
 	RemoteClient *client = getClient(peer_id, CS_Invalid);
 	ClientState cstate = client->getState();
@@ -1648,13 +1753,22 @@ void Server::handleCommand_SrpBytesA(NetworkPacket* pkt)
 	char *bytes_B = 0;
 	size_t len_B = 0;
 
+	const u8* handshake_digest = nullptr;
+	size_t handshake_digest_len = 0;
+	if (client->hasEncryptedNetwork())
+	{
+		handshake_digest = client->getHandshakeDigest().digest;
+		handshake_digest_len = sizeof(client->getHandshakeDigest().digest);
+	}
+
 	client->auth_data = srp_verifier_new(SRP_SHA256, SRP_NG_2048,
 		client->getName().c_str(),
 		(const unsigned char *) salt.c_str(), salt.size(),
 		(const unsigned char *) verifier.c_str(), verifier.size(),
 		(const unsigned char *) bytes_A.c_str(), bytes_A.size(),
 		NULL, 0,
-		(unsigned char **) &bytes_B, &len_B, NULL, NULL);
+		(unsigned char **) &bytes_B, &len_B, NULL, NULL,
+		handshake_digest, handshake_digest_len);
 
 	if (!bytes_B) {
 		actionstream << "Server: User " << client->getName()
@@ -1677,6 +1791,8 @@ void Server::handleCommand_SrpBytesA(NetworkPacket* pkt)
 
 void Server::handleCommand_SrpBytesM(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	session_t peer_id = pkt->getPeerId();
 	RemoteClient *client = getClient(peer_id, CS_Invalid);
 	ClientState cstate = client->getState();
@@ -1710,20 +1826,36 @@ void Server::handleCommand_SrpBytesM(NetworkPacket* pkt)
 	std::string bytes_M;
 	*pkt >> bytes_M;
 
-	if (srp_verifier_get_session_key_length((SRPVerifier *) client->auth_data)
-			!= bytes_M.size()) {
+	SRPVerifier* srp_verifier = (SRPVerifier*)client->auth_data;
+	size_t srp_hash_len = srp_verifier_get_session_key_length(srp_verifier);
+
+	// if the client supports encryption then a value E_S derived from the
+	// shared ECDHE secret is included in the two state hashes M and H
+	// this protects the connection against active attacks
+	//
+	// E_S must be included in state hash directly,
+	// otherwise an attacker could carry out an active downgrade attack
+	// to get a client to do a legacy SRP handshake
+	// and then hash E_S with M, letting the attacker spoof a secure connection.
+
+	unsigned char* bytes_HAMK = nullptr;
+
+	if (srp_verifier_get_session_key_length(srp_verifier)
+		!= bytes_M.size()) {
 		actionstream << "Server: User " << playername << " at " << addr_s
 			<< " sent bytes_M with invalid length " << bytes_M.size() << std::endl;
 		DenyAccess(peer_id, SERVER_ACCESSDENIED_UNEXPECTED_DATA);
 		return;
 	}
 
-	unsigned char *bytes_HAMK = 0;
+	srp_verifier_verify_session(srp_verifier,
+		(unsigned char*)bytes_M.c_str(), &bytes_HAMK);
 
-	srp_verifier_verify_session((SRPVerifier *) client->auth_data,
-		(unsigned char *)bytes_M.c_str(), &bytes_HAMK);
+	bool do_mutual_auth = false;
+	if (client->hasEncryptedNetwork())
+		do_mutual_auth = true;
 
-	if (!bytes_HAMK) {
+	if (!bytes_HAMK || !srp_verifier_is_authenticated(srp_verifier)) {
 		if (wantSudo) {
 			actionstream << "Server: User " << playername << " at " << addr_s
 				<< " tried to change their password, but supplied wrong"
@@ -1740,6 +1872,8 @@ void Server::handleCommand_SrpBytesM(NetworkPacket* pkt)
 		return;
 	}
 
+	client->reportSRPSuccess();
+
 	if (client->create_player_on_auth_success) {
 		m_script->createAuth(playername, client->enc_pwd);
 
@@ -1754,7 +1888,10 @@ void Server::handleCommand_SrpBytesM(NetworkPacket* pkt)
 	}
 
 	m_script->on_authplayer(playername, addr_s, true);
-	acceptAuth(peer_id, wantSudo);
+	if (do_mutual_auth)
+		acceptAuth(peer_id, wantSudo, std::string{ (char*)bytes_HAMK, srp_hash_len });
+	else
+		acceptAuth(peer_id, wantSudo);
 }
 
 /*
@@ -1763,6 +1900,8 @@ void Server::handleCommand_SrpBytesM(NetworkPacket* pkt)
 
 void Server::handleCommand_ModChannelJoin(NetworkPacket *pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	std::string channel_name;
 	*pkt >> channel_name;
 
@@ -1788,6 +1927,8 @@ void Server::handleCommand_ModChannelJoin(NetworkPacket *pkt)
 
 void Server::handleCommand_ModChannelLeave(NetworkPacket *pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	std::string channel_name;
 	*pkt >> channel_name;
 
@@ -1812,6 +1953,8 @@ void Server::handleCommand_ModChannelLeave(NetworkPacket *pkt)
 
 void Server::handleCommand_ModChannelMsg(NetworkPacket *pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	std::string channel_name, channel_msg;
 	*pkt >> channel_name >> channel_msg;
 
@@ -1841,6 +1984,8 @@ void Server::handleCommand_ModChannelMsg(NetworkPacket *pkt)
 
 void Server::handleCommand_HaveMedia(NetworkPacket *pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	std::vector<u32> tokens;
 	u8 numtokens;
 
@@ -1868,6 +2013,8 @@ void Server::handleCommand_HaveMedia(NetworkPacket *pkt)
 
 void Server::handleCommand_UpdateClientInfo(NetworkPacket *pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	ClientDynamicInfo info;
 	*pkt >> info.render_target_size.X;
 	*pkt >> info.render_target_size.Y;

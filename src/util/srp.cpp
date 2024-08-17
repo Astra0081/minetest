@@ -475,7 +475,8 @@ static SRP_Result hash_num(SRP_HashAlgorithm alg, const mpz_t n, unsigned char *
 
 static SRP_Result calculate_M(SRP_HashAlgorithm alg, NGConstant *ng, unsigned char *dest,
 	const char *I, const unsigned char *s_bytes, size_t s_len, const mpz_t A,
-	const mpz_t B, const unsigned char *K)
+	const mpz_t B, const unsigned char *K,
+	const unsigned char* additional_state, size_t additional_len)
 {
 	unsigned char H_N[CSRP_MAX_HASH];
 	unsigned char H_g[CSRP_MAX_HASH];
@@ -502,12 +503,16 @@ static SRP_Result calculate_M(SRP_HashAlgorithm alg, NGConstant *ng, unsigned ch
 	if (!update_hash_n(alg, &ctx, B)) return SRP_ERR;
 	hash_update(alg, &ctx, K, hash_len);
 
+	if (additional_state)
+		hash_update(alg, &ctx, additional_state, additional_len);
+
 	hash_final(alg, &ctx, dest);
 	return SRP_OK;
 }
 
 static SRP_Result calculate_H_AMK(SRP_HashAlgorithm alg, unsigned char *dest,
-	const mpz_t A, const unsigned char *M, const unsigned char *K)
+	const mpz_t A, const unsigned char *M, const unsigned char *K,
+	const unsigned char* additional_state, size_t additional_len)
 {
 	HashCTX ctx;
 
@@ -516,6 +521,9 @@ static SRP_Result calculate_H_AMK(SRP_HashAlgorithm alg, unsigned char *dest,
 	if (!update_hash_n(alg, &ctx, A)) return SRP_ERR;
 	hash_update(alg, &ctx, M, hash_length(alg));
 	hash_update(alg, &ctx, K, hash_length(alg));
+
+	if (additional_state)
+		hash_update(alg, &ctx, additional_state, additional_len);
 
 	hash_final(alg, &ctx, dest);
 	return SRP_OK;
@@ -652,7 +660,8 @@ struct SRPVerifier *srp_verifier_new(SRP_HashAlgorithm alg,
 	const unsigned char *bytes_A, size_t len_A,
 	const unsigned char *bytes_b, size_t len_b,
 	unsigned char **bytes_B, size_t *len_B,
-	const char *n_hex, const char *g_hex )
+	const char *n_hex, const char *g_hex,
+	const unsigned char* additional_state, size_t additional_len)
 {
 	mpz_t v; mpz_init(v); mpz_from_bin(bytes_v, len_v, v);
 	mpz_t A; mpz_init(A); mpz_from_bin(bytes_A, len_A, A);
@@ -725,10 +734,12 @@ struct SRPVerifier *srp_verifier_new(SRP_HashAlgorithm alg,
 		if (!hash_num(alg, S, ver->session_key)) goto ver_cleanup_and_exit;
 
 		if (!calculate_M(
-				alg, ng, ver->M, username, bytes_s, len_s, A, B, ver->session_key)) {
+				alg, ng, ver->M, username, bytes_s, len_s, A, B, ver->session_key,
+				additional_state, additional_len)) {
 			goto ver_cleanup_and_exit;
 		}
-		if (!calculate_H_AMK(alg, ver->H_AMK, A, ver->M, ver->session_key)) {
+		if (!calculate_H_AMK(alg, ver->H_AMK, A, ver->M, ver->session_key,
+				additional_state, additional_len)) {
 			goto ver_cleanup_and_exit;
 		}
 
@@ -807,8 +818,10 @@ void srp_verifier_verify_session(
 	if (memcmp(ver->M, user_M, hash_length(ver->hash_alg)) == 0) {
 		ver->authenticated = 1;
 		*bytes_HAMK = ver->H_AMK;
-	} else
+	}
+	else {
 		*bytes_HAMK = NULL;
+	}
 }
 
 /*******************************************************************************/
@@ -950,7 +963,8 @@ error_and_exit:
 void  srp_user_process_challenge(struct SRPUser *usr,
 	const unsigned char *bytes_s, size_t len_s,
 	const unsigned char *bytes_B, size_t len_B,
-	unsigned char **bytes_M, size_t *len_M)
+	unsigned char **bytes_M, size_t *len_M,
+	const unsigned char* additional_state, size_t additional_len)
 {
 	mpz_t B; mpz_init(B); mpz_from_bin(bytes_B, len_B, B);
 	mpz_t u; mpz_init(u);
@@ -995,9 +1009,10 @@ void  srp_user_process_challenge(struct SRPUser *usr,
 		if (!hash_num(usr->hash_alg, usr->S, usr->session_key)) goto cleanup_and_exit;
 
 		if (!calculate_M(usr->hash_alg, usr->ng, usr->M, usr->username, bytes_s, len_s,
-				usr->A, B, usr->session_key))
+				usr->A, B, usr->session_key, additional_state, additional_len))
 			goto cleanup_and_exit;
-		if (!calculate_H_AMK(usr->hash_alg, usr->H_AMK, usr->A, usr->M, usr->session_key))
+		if (!calculate_H_AMK(usr->hash_alg, usr->H_AMK, usr->A, usr->M,
+				usr->session_key, additional_state, additional_len))
 			goto cleanup_and_exit;
 
 		*bytes_M = usr->M;

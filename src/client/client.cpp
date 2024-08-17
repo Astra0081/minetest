@@ -147,6 +147,12 @@ Client::Client(
 
 	m_cache_save_interval = g_settings->getU16("server_map_save_interval");
 	m_mesh_grid = { g_settings->getU16("client_mesh_chunk") };
+
+	NetworkEncryption::EphemeralKeyGenerator key_gen;
+	if (!key_gen.generate(m_network_ephemeral_key))
+	{
+		throw BaseException("Failed to generate network ECDHE key!");
+	}
 }
 
 void Client::migrateModStorage()
@@ -1145,7 +1151,7 @@ AuthMechanism Client::choseAuthMech(const u32 mechs)
 
 void Client::sendInit(const std::string &playerName)
 {
-	NetworkPacket pkt(TOSERVER_INIT, 1 + 2 + 2 + (1 + playerName.size()));
+	NetworkPacket pkt(TOSERVER_INIT, 1 + 2 + 2 + (1 + playerName.size()) + sizeof(m_network_ephemeral_key.public_key));
 
 	// we don't support network compression yet
 	u16 supp_comp_modes = NETPROTO_COMPRESSION_NONE;
@@ -1153,6 +1159,7 @@ void Client::sendInit(const std::string &playerName)
 	pkt << (u8) SER_FMT_VER_HIGHEST_READ << (u16) supp_comp_modes;
 	pkt << (u16) CLIENT_PROTOCOL_VERSION_MIN << (u16) CLIENT_PROTOCOL_VERSION_MAX;
 	pkt << playerName;
+	pkt.putRawData(&m_network_ephemeral_key.public_key[0], sizeof(m_network_ephemeral_key.public_key));
 
 	Send(&pkt);
 }

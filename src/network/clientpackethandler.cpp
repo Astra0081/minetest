@@ -48,6 +48,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "particles.h"
 #include <memory>
 
+#define CHECK_RELIABLE(pkt) \
+	if (!pkt->getWasReliable()) { actionstream << FUNCTION_NAME << ": Recieved an unreliable packet from the server, " \
+		"when only a reliable packet would have been valid. Ignoring." << std::endl; return; }
+
 void Client::handleCommand_Deprecated(NetworkPacket* pkt)
 {
 	infostream << "Got deprecated command "
@@ -57,6 +61,8 @@ void Client::handleCommand_Deprecated(NetworkPacket* pkt)
 
 void Client::handleCommand_Hello(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	if (pkt->getSize() < 1)
 		return;
 
@@ -68,6 +74,31 @@ void Client::handleCommand_Hello(NetworkPacket* pkt)
 	*pkt >> serialization_ver >> compression_mode >> proto_ver
 		>> auth_mechs >> username_legacy;
 
+	const bool server_supports_wire_encryption = proto_ver >= PROTOCOL_VERSION_ENCRYPTION;
+	NetworkEncryption::ECDHEPublicKey server_pub_key = {};
+	if (server_supports_wire_encryption)
+	{
+		pkt->readRawData(server_pub_key.key, sizeof(server_pub_key.key));
+		m_server_ephemeral_key = server_pub_key;
+
+		NetworkEncryption::AESChannelKeys client_send_keys = {};
+		NetworkEncryption::AESChannelKeys server_send_keys = {};
+
+		if (!NetworkEncryption::derive_subkeys(m_network_ephemeral_key, server_pub_key, client_send_keys, server_send_keys, m_handshake_digest))
+		{
+			errorstream << "Failed to derive channel encryption keys! Disconnecting from server." << std::endl;
+
+			m_access_denied = true;
+			m_access_denied_reason = gettext("Internal error when establishing a secure connection!");
+			m_con->Disconnect();
+
+			return;
+		}
+
+		m_con->setEncryptionKeys(PEER_ID_SERVER, client_send_keys, server_send_keys);
+		m_network_security_level = NetworkEncryption::ConnectionSecurityLevel::Passive;
+	}
+
 	// Chose an auth method we support
 	AuthMechanism chosen_auth_mechanism = choseAuthMech(auth_mechs);
 
@@ -76,6 +107,7 @@ void Client::handleCommand_Hello(NetworkPacket* pkt)
 			<< ", auth_mechs=" << auth_mechs
 			<< ", proto_ver=" << proto_ver
 			<< ", compression_mode=" << compression_mode
+			<< ", encryption_enabled=" << server_supports_wire_encryption
 			<< ". Doing auth with mech " << chosen_auth_mechanism << std::endl;
 
 	if (!ser_ver_supported(serialization_ver)) {
@@ -132,11 +164,56 @@ void Client::handleCommand_Hello(NetworkPacket* pkt)
 
 void Client::handleCommand_AuthAccept(NetworkPacket* pkt)
 {
-	deleteAuthData();
+	CHECK_RELIABLE(pkt);
 
 	v3f playerpos;
 	*pkt >> playerpos >> m_map_seed >> m_recommended_send_interval
 		>> m_sudo_auth_methods;
+
+	if (m_proto_ver >= PROTOCOL_VERSION_ENCRYPTION &&
+		(m_chosen_auth_mech == AUTH_MECHANISM_SRP ||
+		 m_chosen_auth_mech == AUTH_MECHANISM_LEGACY_PASSWORD))
+	{
+		std::string signed_h_bytes;
+		*pkt >> signed_h_bytes;
+
+		SRPUser* user = (SRPUser*)m_auth_data;
+		size_t expected_h_len = srp_user_get_session_key_length(user);
+
+		if (signed_h_bytes.size() != expected_h_len)
+		{
+			actionstream << "Mutual authenication with server has failed! (wrong digest length"
+				<< " got: " << signed_h_bytes.size()
+				<< " expected: " << expected_h_len << ")" << std::endl;
+
+			m_access_denied = true;
+			m_access_denied_reason = gettext("Mutual authenication with the server failed, wrong SRP verification bytes length.");
+			m_con->Disconnect();
+
+			deleteAuthData();
+			return;
+		}
+
+		srp_user_verify_session(user, reinterpret_cast<const unsigned char*>(signed_h_bytes.c_str()));
+
+		if (!srp_user_is_authenticated(user))
+		{
+			actionstream << "Mutual authenication with server has failed! Disconnecting." << std::endl;
+
+			m_access_denied = true;
+			m_access_denied_reason = gettext("Mutual authenication with the server failed, your network connection might have been tampered with.");
+			m_con->Disconnect();
+
+			deleteAuthData();
+			return;
+		}
+		else
+		{
+			m_network_security_level = NetworkEncryption::ConnectionSecurityLevel::FullyAuthenicated;
+		}
+	}
+
+	deleteAuthData();
 
 	playerpos -= v3f(0, BS / 2, 0);
 
@@ -166,6 +243,8 @@ void Client::handleCommand_AuthAccept(NetworkPacket* pkt)
 
 void Client::handleCommand_AcceptSudoMode(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	deleteAuthData();
 
 	m_password = m_new_password;
@@ -180,6 +259,8 @@ void Client::handleCommand_AcceptSudoMode(NetworkPacket* pkt)
 }
 void Client::handleCommand_DenySudoMode(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	ChatMessage *chatMessage = new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
 			L"Password change denied. Password NOT changed.");
 	pushToChatQueue(chatMessage);
@@ -189,6 +270,8 @@ void Client::handleCommand_DenySudoMode(NetworkPacket* pkt)
 
 void Client::handleCommand_AccessDenied(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	// The server didn't like our password. Note, this needs
 	// to be processed even if the serialization format has
 	// not been agreed yet, the same as TOCLIENT_INIT.
@@ -198,6 +281,8 @@ void Client::handleCommand_AccessDenied(NetworkPacket* pkt)
 	if (pkt->getCommand() != TOCLIENT_ACCESS_DENIED) {
 		// Legacy code from 0.4.12 and older but is still used
 		// in some places of the server code
+		// ^^^ that comment was highly optimistic,
+		// the server finally stopped using it in 2022 see commit a65f6f07f3a5601207b790edcc8cc945133112f7
 		if (pkt->getSize() >= 2) {
 			std::wstring wide_reason;
 			*pkt >> wide_reason;
@@ -216,17 +301,17 @@ void Client::handleCommand_AccessDenied(NetworkPacket* pkt)
 			denyCode == SERVER_ACCESSDENIED_CRASH) {
 		*pkt >> m_access_denied_reason;
 		if (m_access_denied_reason.empty())
-			m_access_denied_reason = accessDeniedStrings[denyCode];
+			m_access_denied_reason = gettext(accessDeniedStrings[denyCode]);
 		u8 reconnect;
 		*pkt >> reconnect;
 		m_access_denied_reconnect = reconnect & 1;
 	} else if (denyCode == SERVER_ACCESSDENIED_CUSTOM_STRING) {
 		*pkt >> m_access_denied_reason;
 	} else if (denyCode == SERVER_ACCESSDENIED_TOO_MANY_USERS) {
-		m_access_denied_reason = accessDeniedStrings[denyCode];
+		m_access_denied_reason = gettext(accessDeniedStrings[denyCode]);
 		m_access_denied_reconnect = true;
 	} else if (denyCode < SERVER_ACCESSDENIED_MAX) {
-		m_access_denied_reason = accessDeniedStrings[denyCode];
+		m_access_denied_reason = gettext(accessDeniedStrings[denyCode]);
 	} else {
 		// Allow us to add new error messages to the
 		// protocol without raising the protocol version, if we want to.
@@ -234,12 +319,14 @@ void Client::handleCommand_AccessDenied(NetworkPacket* pkt)
 		// of the defined protocol.
 		*pkt >> m_access_denied_reason;
 		if (m_access_denied_reason.empty())
-			m_access_denied_reason = "Unknown";
+			m_access_denied_reason = gettext("Access denied for an unknown reason.");
 	}
 }
 
 void Client::handleCommand_RemoveNode(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	if (pkt->getSize() < 6)
 		return;
 
@@ -250,6 +337,8 @@ void Client::handleCommand_RemoveNode(NetworkPacket* pkt)
 
 void Client::handleCommand_AddNode(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	if (pkt->getSize() < 6 + MapNode::serializedLength(m_server_ser_ver))
 		return;
 
@@ -270,6 +359,8 @@ void Client::handleCommand_AddNode(NetworkPacket* pkt)
 
 void Client::handleCommand_NodemetaChanged(NetworkPacket *pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	if (pkt->getSize() < 1)
 		return;
 
@@ -296,6 +387,8 @@ void Client::handleCommand_NodemetaChanged(NetworkPacket *pkt)
 
 void Client::handleCommand_BlockData(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	// Ignore too small packet
 	if (pkt->getSize() < 6)
 		return;
@@ -343,6 +436,8 @@ void Client::handleCommand_BlockData(NetworkPacket* pkt)
 
 void Client::handleCommand_Inventory(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	if (pkt->getSize() < 1)
 		return;
 
@@ -363,6 +458,8 @@ void Client::handleCommand_Inventory(NetworkPacket* pkt)
 
 void Client::handleCommand_TimeOfDay(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	if (pkt->getSize() < 2)
 		return;
 
@@ -411,6 +508,8 @@ void Client::handleCommand_TimeOfDay(NetworkPacket* pkt)
 
 void Client::handleCommand_ChatMessage(NetworkPacket *pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	/*
 		u8 version
 		u8 message_type
@@ -447,6 +546,8 @@ void Client::handleCommand_ChatMessage(NetworkPacket *pkt)
 
 void Client::handleCommand_ActiveObjectRemoveAdd(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	/*
 		u16 count of removed objects
 		for all removed objects {
@@ -494,6 +595,8 @@ void Client::handleCommand_ActiveObjectRemoveAdd(NetworkPacket* pkt)
 
 void Client::handleCommand_ActiveObjectMessages(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	/*
 		for all objects
 		{
@@ -524,6 +627,8 @@ void Client::handleCommand_ActiveObjectMessages(NetworkPacket* pkt)
 
 void Client::handleCommand_Movement(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	LocalPlayer *player = m_env.getLocalPlayer();
 	assert(player != NULL);
 
@@ -548,6 +653,8 @@ void Client::handleCommand_Movement(NetworkPacket* pkt)
 
 void Client::handleCommand_Fov(NetworkPacket *pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	f32 fov;
 	bool is_multiplier = false;
 	f32 transition_time = 0.0f;
@@ -568,6 +675,8 @@ void Client::handleCommand_Fov(NetworkPacket *pkt)
 
 void Client::handleCommand_HP(NetworkPacket *pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	LocalPlayer *player = m_env.getLocalPlayer();
 	assert(player != NULL);
 
@@ -597,6 +706,8 @@ void Client::handleCommand_HP(NetworkPacket *pkt)
 
 void Client::handleCommand_Breath(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	LocalPlayer *player = m_env.getLocalPlayer();
 	assert(player != NULL);
 
@@ -609,6 +720,8 @@ void Client::handleCommand_Breath(NetworkPacket* pkt)
 
 void Client::handleCommand_MovePlayer(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	LocalPlayer *player = m_env.getLocalPlayer();
 	assert(player != NULL);
 
@@ -640,6 +753,8 @@ void Client::handleCommand_MovePlayer(NetworkPacket* pkt)
 
 void Client::handleCommand_MovePlayerRel(NetworkPacket *pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	v3f added_pos;
 
 	*pkt >> added_pos;
@@ -651,6 +766,8 @@ void Client::handleCommand_MovePlayerRel(NetworkPacket *pkt)
 
 void Client::handleCommand_DeathScreen(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	bool set_camera_point_target;
 	v3f camera_point_target;
 
@@ -668,6 +785,8 @@ void Client::handleCommand_DeathScreen(NetworkPacket* pkt)
 
 void Client::handleCommand_AnnounceMedia(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	u16 num_files;
 
 	*pkt >> num_files;
@@ -719,6 +838,8 @@ void Client::handleCommand_AnnounceMedia(NetworkPacket* pkt)
 
 void Client::handleCommand_Media(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	/*
 		u16 command
 		u16 total number of file bunches
@@ -781,6 +902,8 @@ void Client::handleCommand_Media(NetworkPacket* pkt)
 
 void Client::handleCommand_NodeDef(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	infostream << "Client: Received node definitions: packet size: "
 			<< pkt->getSize() << std::endl;
 
@@ -800,6 +923,8 @@ void Client::handleCommand_NodeDef(NetworkPacket* pkt)
 
 void Client::handleCommand_ItemDef(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	infostream << "Client: Received item definitions: packet size: "
 			<< pkt->getSize() << std::endl;
 
@@ -819,6 +944,8 @@ void Client::handleCommand_ItemDef(NetworkPacket* pkt)
 
 void Client::handleCommand_PlaySound(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	/*
 		[0] s32 server_id
 		[4] u16 name length
@@ -898,6 +1025,8 @@ void Client::handleCommand_PlaySound(NetworkPacket* pkt)
 
 void Client::handleCommand_StopSound(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	s32 server_id;
 
 	*pkt >> server_id;
@@ -911,6 +1040,8 @@ void Client::handleCommand_StopSound(NetworkPacket* pkt)
 
 void Client::handleCommand_FadeSound(NetworkPacket *pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	s32 sound_id;
 	float step;
 	float gain;
@@ -926,6 +1057,8 @@ void Client::handleCommand_FadeSound(NetworkPacket *pkt)
 
 void Client::handleCommand_Privileges(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	m_privileges.clear();
 	infostream << "Client: Privileges updated: ";
 	u16 num_privileges;
@@ -945,6 +1078,8 @@ void Client::handleCommand_Privileges(NetworkPacket* pkt)
 
 void Client::handleCommand_InventoryFormSpec(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	LocalPlayer *player = m_env.getLocalPlayer();
 	assert(player != NULL);
 
@@ -954,6 +1089,8 @@ void Client::handleCommand_InventoryFormSpec(NetworkPacket* pkt)
 
 void Client::handleCommand_DetachedInventory(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	std::string name;
 	bool keep_inv = true;
 	*pkt >> name >> keep_inv;
@@ -987,6 +1124,8 @@ void Client::handleCommand_DetachedInventory(NetworkPacket* pkt)
 
 void Client::handleCommand_ShowFormSpec(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	std::string formspec = pkt->readLongString();
 	std::string formname;
 
@@ -1003,6 +1142,8 @@ void Client::handleCommand_ShowFormSpec(NetworkPacket* pkt)
 
 void Client::handleCommand_SpawnParticle(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	std::string datastring(pkt->getString(0), pkt->getSize());
 	std::istringstream is(datastring, std::ios_base::binary);
 
@@ -1018,6 +1159,8 @@ void Client::handleCommand_SpawnParticle(NetworkPacket* pkt)
 
 void Client::handleCommand_AddParticleSpawner(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	std::string datastring(pkt->getString(0), pkt->getSize());
 	std::istringstream is(datastring, std::ios_base::binary);
 
@@ -1147,6 +1290,8 @@ void Client::handleCommand_AddParticleSpawner(NetworkPacket* pkt)
 
 void Client::handleCommand_DeleteParticleSpawner(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	u32 server_id;
 	*pkt >> server_id;
 
@@ -1159,6 +1304,8 @@ void Client::handleCommand_DeleteParticleSpawner(NetworkPacket* pkt)
 
 void Client::handleCommand_HudAdd(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	u32 server_id;
 	u8 type;
 	v2f pos;
@@ -1210,6 +1357,8 @@ void Client::handleCommand_HudAdd(NetworkPacket* pkt)
 
 void Client::handleCommand_HudRemove(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	u32 server_id;
 
 	*pkt >> server_id;
@@ -1222,6 +1371,8 @@ void Client::handleCommand_HudRemove(NetworkPacket* pkt)
 
 void Client::handleCommand_HudChange(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	std::string sdata;
 	v2f v2fdata;
 	v3f v3fdata;
@@ -1276,6 +1427,8 @@ void Client::handleCommand_HudChange(NetworkPacket* pkt)
 
 void Client::handleCommand_HudSetFlags(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	u32 flags, mask;
 
 	*pkt >> flags >> mask;
@@ -1305,6 +1458,8 @@ void Client::handleCommand_HudSetFlags(NetworkPacket* pkt)
 
 void Client::handleCommand_HudSetParam(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	u16 param; std::string value;
 
 	*pkt >> param >> value;
@@ -1327,6 +1482,8 @@ void Client::handleCommand_HudSetParam(NetworkPacket* pkt)
 
 void Client::handleCommand_HudSetSky(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	if (m_proto_ver < 39) {
 		// Handle Protocol 38 and below servers with old set_sky,
 		// ensuring the classic look is kept.
@@ -1426,6 +1583,8 @@ void Client::handleCommand_HudSetSky(NetworkPacket* pkt)
 
 void Client::handleCommand_HudSetSun(NetworkPacket *pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	SunParams sun;
 
 	*pkt >> sun.visible >> sun.texture>> sun.tonemap
@@ -1439,6 +1598,8 @@ void Client::handleCommand_HudSetSun(NetworkPacket *pkt)
 
 void Client::handleCommand_HudSetMoon(NetworkPacket *pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	MoonParams moon;
 
 	*pkt >> moon.visible >> moon.texture
@@ -1452,6 +1613,8 @@ void Client::handleCommand_HudSetMoon(NetworkPacket *pkt)
 
 void Client::handleCommand_HudSetStars(NetworkPacket *pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	StarParams stars = SkyboxDefaults::getStarDefaults();
 
 	*pkt >> stars.visible >> stars.count
@@ -1469,6 +1632,8 @@ void Client::handleCommand_HudSetStars(NetworkPacket *pkt)
 
 void Client::handleCommand_CloudParams(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	f32 density;
 	video::SColor color_bright;
 	video::SColor color_ambient;
@@ -1497,6 +1662,8 @@ void Client::handleCommand_CloudParams(NetworkPacket* pkt)
 
 void Client::handleCommand_OverrideDayNightRatio(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	bool do_override;
 	u16 day_night_ratio_u;
 
@@ -1513,6 +1680,8 @@ void Client::handleCommand_OverrideDayNightRatio(NetworkPacket* pkt)
 
 void Client::handleCommand_LocalPlayerAnimations(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	LocalPlayer *player = m_env.getLocalPlayer();
 	assert(player != NULL);
 
@@ -1527,6 +1696,8 @@ void Client::handleCommand_LocalPlayerAnimations(NetworkPacket* pkt)
 
 void Client::handleCommand_EyeOffset(NetworkPacket* pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	LocalPlayer *player = m_env.getLocalPlayer();
 	assert(player != NULL);
 
@@ -1540,6 +1711,8 @@ void Client::handleCommand_EyeOffset(NetworkPacket* pkt)
 
 void Client::handleCommand_UpdatePlayerList(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	u8 type;
 	u16 num_players;
 	*pkt >> type >> num_players;
@@ -1562,6 +1735,8 @@ void Client::handleCommand_UpdatePlayerList(NetworkPacket* pkt)
 
 void Client::handleCommand_SrpBytesSandB(NetworkPacket* pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	if (m_chosen_auth_mech != AUTH_MECHANISM_SRP &&
 			m_chosen_auth_mech != AUTH_MECHANISM_LEGACY_PASSWORD) {
 		errorstream << "Client: Received SRP S_B login message,"
@@ -1579,22 +1754,39 @@ void Client::handleCommand_SrpBytesSandB(NetworkPacket* pkt)
 
 	infostream << "Client: Received TOCLIENT_SRP_BYTES_S_B." << std::endl;
 
+	u8* extra_auth_data = nullptr;
+	size_t extra_auth_data_len = 0;
+
+	if (m_proto_ver >= PROTOCOL_VERSION_ENCRYPTION)
+	{
+		extra_auth_data = m_handshake_digest.digest;
+		extra_auth_data_len = sizeof(m_handshake_digest.digest);
+	}
+
 	srp_user_process_challenge(usr, (const unsigned char *) s.c_str(), s.size(),
 		(const unsigned char *) B.c_str(), B.size(),
-		(unsigned char **) &bytes_M, &len_M);
+		(unsigned char **) &bytes_M, &len_M,
+		extra_auth_data, extra_auth_data_len);
 
 	if ( !bytes_M ) {
 		errorstream << "Client: SRP-6a S_B safety check violation!" << std::endl;
+
+		m_access_denied = true;
+		m_access_denied_reason = gettext("Internal error when establishing a secure connection!");
+		m_con->Disconnect();
+
 		return;
 	}
 
-	NetworkPacket resp_pkt(TOSERVER_SRP_BYTES_M, 0);
+	NetworkPacket resp_pkt(TOSERVER_SRP_BYTES_M, len_M + 2);
 	resp_pkt << std::string(bytes_M, len_M);
 	Send(&resp_pkt);
 }
 
 void Client::handleCommand_FormspecPrepend(NetworkPacket *pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	LocalPlayer *player = m_env.getLocalPlayer();
 	assert(player != NULL);
 
@@ -1604,6 +1796,8 @@ void Client::handleCommand_FormspecPrepend(NetworkPacket *pkt)
 
 void Client::handleCommand_CSMRestrictionFlags(NetworkPacket *pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	*pkt >> m_csm_restriction_flags >> m_csm_restriction_noderange;
 
 	// Restrictions were received -> load mods if it's enabled
@@ -1613,6 +1807,8 @@ void Client::handleCommand_CSMRestrictionFlags(NetworkPacket *pkt)
 
 void Client::handleCommand_PlayerSpeed(NetworkPacket *pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	v3f added_vel;
 
 	*pkt >> added_vel;
@@ -1624,6 +1820,8 @@ void Client::handleCommand_PlayerSpeed(NetworkPacket *pkt)
 
 void Client::handleCommand_MediaPush(NetworkPacket *pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	std::string raw_hash, filename, filedata;
 	u32 token;
 	bool cached;
@@ -1686,6 +1884,8 @@ void Client::handleCommand_MediaPush(NetworkPacket *pkt)
 
 void Client::handleCommand_ModChannelMsg(NetworkPacket *pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	std::string channel_name, sender, channel_msg;
 	*pkt >> channel_name >> sender >> channel_msg;
 
@@ -1704,6 +1904,8 @@ void Client::handleCommand_ModChannelMsg(NetworkPacket *pkt)
 
 void Client::handleCommand_ModChannelSignal(NetworkPacket *pkt)
 {
+	CHECK_RELIABLE(pkt);
+
 	u8 signal_tmp;
 	ModChannelSignal signal;
 	std::string channel;
@@ -1774,6 +1976,8 @@ void Client::handleCommand_ModChannelSignal(NetworkPacket *pkt)
 
 void Client::handleCommand_MinimapModes(NetworkPacket *pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	u16 count; // modes
 	u16 mode;  // wanted current mode index after change
 
@@ -1801,6 +2005,8 @@ void Client::handleCommand_MinimapModes(NetworkPacket *pkt)
 
 void Client::handleCommand_SetLighting(NetworkPacket *pkt)
 {
+	/* intentionally not checking for whatever the packet was reliable */
+
 	Lighting& lighting = m_env.getLocalPlayer()->getLighting();
 
 	if (pkt->getRemainingBytes() >= 4)

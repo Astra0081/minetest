@@ -126,7 +126,8 @@ struct SRPVerifier* srp_verifier_new(SRP_HashAlgorithm alg, SRP_NGType ng_type,
 	const unsigned char *bytes_A, size_t len_A,
 	const unsigned char *bytes_b, size_t len_b,
 	unsigned char** bytes_B, size_t *len_B,
-	const char* n_hex, const char* g_hex);
+	const char* n_hex, const char* g_hex,
+	const unsigned char *additional_state = nullptr, size_t additional_len = 0);
 
 void srp_verifier_delete(struct SRPVerifier *ver);
 
@@ -178,7 +179,8 @@ SRP_Result srp_user_start_authentication(struct SRPUser* usr, char **username,
 void srp_user_process_challenge(struct SRPUser *usr,
 	const unsigned char *bytes_s, size_t len_s,
 	const unsigned char *bytes_B, size_t len_B,
-	unsigned char **bytes_M, size_t *len_M);
+	unsigned char **bytes_M, size_t *len_M,
+	const unsigned char* additional_state = nullptr, size_t additional_len = 0);
 
 /* bytes_HAMK must be exactly srp_user_get_session_key_length() bytes in size */
 void srp_user_verify_session(struct SRPUser *usr, const unsigned char *bytes_HAMK);
