@@ -71,8 +71,8 @@ metatable.__tostring = vector.to_string
 
 function vector.equals(a, b)
 	return a.x == b.x and
-	       a.y == b.y and
-	       a.z == b.z
+			a.y == b.y and
+			a.z == b.z
 end
 metatable.__eq = vector.equals
 
@@ -380,7 +380,7 @@ function vector.random_direction()
 	local x, y, z, l2
 	repeat -- expected less than two attempts on average (volume sphere vs. cube)
 		x, y, z = math.random() * 2 - 1, math.random() * 2 - 1, math.random() * 2 - 1
-        l2 = x*x + y*y + z*z
+		l2 = x*x + y*y + z*z
 	until l2 <= 1 and l2 >= 1e-6
 	-- normalize
 	local l = math.sqrt(l2)

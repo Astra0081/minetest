@@ -156,7 +156,7 @@ ServerMap::~ServerMap()
 	catch(std::exception &e)
 	{
 		errorstream << "ServerMap: Failed to save map to " << m_savedir
-				 << ", exception: " << e.what() << std::endl;
+				<< ", exception: " << e.what() << std::endl;
 	}
 
 	/*
@@ -815,8 +815,8 @@ struct NodeNeighbor {
 
 	NodeNeighbor(const MapNode &node, NeighborType n_type, const v3s16 &pos)
 		: n(node),
-		  t(n_type),
-		  p(pos)
+			t(n_type),
+			p(pos)
 	{ }
 };
 
@@ -1217,7 +1217,7 @@ void ServerMap::transformLiquids(std::map<v3s16, MapBlock*> &modified_blocks,
 		size_t dump_qty = m_unprocessed_count - liquid_loop_max;
 
 		infostream << "transformLiquids(): DUMPING " << dump_qty
-		           << " blocks from the queue" << std::endl;
+				<< " blocks from the queue" << std::endl;
 
 		while (dump_qty--)
 			m_transforming_liquid.pop_front();

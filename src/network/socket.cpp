@@ -116,7 +116,7 @@ bool UDPSocket::init(bool ipv6, bool noExceptions)
 		}
 
 		throw SocketException(std::string("Failed to create socket: error ") +
-				      SOCKET_ERR_STR(LAST_SOCKET_ERR()));
+				SOCKET_ERR_STR(LAST_SOCKET_ERR()));
 	}
 
 	setTimeoutMs(0);

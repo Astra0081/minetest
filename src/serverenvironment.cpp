@@ -1545,8 +1545,8 @@ void ServerEnvironment::step(float dtime)
 
 			if (time_ms > max_time_ms) {
 				warningstream << "active block modifiers took "
-					  << time_ms << "ms (processed " << i << " of "
-					  << output.size() << " active blocks)" << std::endl;
+						<< time_ms << "ms (processed " << i << " of "
+						<< output.size() << " active blocks)" << std::endl;
 				break;
 			}
 		}
@@ -2154,8 +2154,8 @@ void ServerEnvironment::deactivateFarObjects(const bool _force_delete)
 		// is actually located in an active block, re-save to the block in
 		// which the object is actually located in.
 		if (!force_delete && obj->isStaticAllowed() && obj->m_static_exists &&
-		   !m_active_blocks.contains(obj->m_static_block) &&
-		   m_active_blocks.contains(blockpos_o)) {
+				!m_active_blocks.contains(obj->m_static_block) &&
+				m_active_blocks.contains(blockpos_o)) {
 
 			// Delete from block where object was located
 			deleteStaticFromBlock(obj, id, MOD_REASON_STATIC_DATA_REMOVED, false);
@@ -2175,8 +2175,8 @@ void ServerEnvironment::deactivateFarObjects(const bool _force_delete)
 			return false;
 
 		verbosestream << "ServerEnvironment::deactivateFarObjects(): "
-					  << "deactivating object id=" << id << " on inactive block "
-					  << blockpos_o << std::endl;
+				<< "deactivating object id=" << id << " on inactive block "
+				<< blockpos_o << std::endl;
 
 		// If known by some client, don't immediately delete.
 		bool pending_delete = (obj->m_known_by_count > 0 && !force_delete);
@@ -2245,8 +2245,8 @@ void ServerEnvironment::deactivateFarObjects(const bool _force_delete)
 		*/
 		if (pending_delete && !force_delete) {
 			verbosestream << "ServerEnvironment::deactivateFarObjects(): "
-						  << "object id=" << id << " is known by clients"
-						  << "; not deleting yet" << std::endl;
+					<< "object id=" << id << " is known by clients"
+					<< "; not deleting yet" << std::endl;
 
 			return false;
 		}
@@ -2538,7 +2538,7 @@ bool ServerEnvironment::migrateAuthDatabase(
 
 	} catch (BaseException &e) {
 		errorstream << "An error occurred during migration: " << e.what()
-			    << std::endl;
+				<< std::endl;
 		return false;
 	}
 	return true;

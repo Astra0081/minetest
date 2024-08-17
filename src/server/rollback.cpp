@@ -358,16 +358,16 @@ bool RollbackManager::initDatabase()
 
 	while (sqlite3_step(stmt_knownActor_select) == SQLITE_ROW) {
 		registerNewActor(
-		        sqlite3_column_int(stmt_knownActor_select, 0),
-		        reinterpret_cast<const char *>(sqlite3_column_text(stmt_knownActor_select, 1))
+				sqlite3_column_int(stmt_knownActor_select, 0),
+				reinterpret_cast<const char *>(sqlite3_column_text(stmt_knownActor_select, 1))
 		);
 	}
 	SQLOK(sqlite3_reset(stmt_knownActor_select));
 
 	while (sqlite3_step(stmt_knownNode_select) == SQLITE_ROW) {
 		registerNewNode(
-		        sqlite3_column_int(stmt_knownNode_select, 0),
-		        reinterpret_cast<const char *>(sqlite3_column_text(stmt_knownNode_select, 1))
+				sqlite3_column_int(stmt_knownNode_select, 0),
+				reinterpret_cast<const char *>(sqlite3_column_text(stmt_knownNode_select, 1))
 		);
 	}
 	SQLOK(sqlite3_reset(stmt_knownNode_select));
@@ -745,8 +745,8 @@ std::string RollbackManager::getSuspect(v3s16 p, float nearness_shortcut,
 	RollbackAction likely_suspect;
 	float likely_suspect_nearness = 0;
 	for (std::list<RollbackAction>::const_reverse_iterator
-	     i = action_latest_buffer.rbegin();
-	     i != action_latest_buffer.rend(); ++i) {
+			i = action_latest_buffer.rbegin();
+			i != action_latest_buffer.rend(); ++i) {
 		if (i->unix_time < first_time) {
 			break;
 		}
@@ -759,7 +759,7 @@ std::string RollbackManager::getSuspect(v3s16 p, float nearness_shortcut,
 			continue;
 		}
 		float f = getSuspectNearness(i->actor_is_guess, suspect_p,
-					     i->unix_time, p, cur_time);
+				i->unix_time, p, cur_time);
 		if (f >= min_nearness && f > likely_suspect_nearness) {
 			likely_suspect_nearness = f;
 			likely_suspect = *i;

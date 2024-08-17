@@ -38,7 +38,7 @@ PlayerDatabaseFiles::PlayerDatabaseFiles(const std::string &savedir) : m_savedir
 }
 
 void PlayerDatabaseFiles::deSerialize(RemotePlayer *p, std::istream &is,
-	 const std::string &playername, PlayerSAO *sao)
+		const std::string &playername, PlayerSAO *sao)
 {
 	Settings args("PlayerArgsEnd");
 

@@ -332,8 +332,8 @@ std::string UnitSAO::generateUpdateBoneOverrideCommand(
 	writeF32(os, props.rotation.interp_timer);
 	writeF32(os, props.scale.interp_timer);
 	writeU8(os, (props.position.absolute & 1) << 0
-	          | (props.rotation.absolute & 1) << 1
-	          | (props.scale.absolute & 1) << 2);
+			| (props.rotation.absolute & 1) << 1
+			| (props.scale.absolute & 1) << 2);
 	return os.str();
 }
 

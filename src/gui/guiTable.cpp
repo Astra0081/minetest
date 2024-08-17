@@ -922,7 +922,7 @@ bool GUITable::OnEvent(const SEvent &event)
 
 		if (event.MouseInput.isLeftPressed() &&
 				(isPointInside(p) ||
-				 event.MouseInput.Event == EMIE_MOUSE_MOVED)) {
+				event.MouseInput.Event == EMIE_MOUSE_MOVED)) {
 			s32 sel_column = 0;
 			bool sel_doubleclick = (event.MouseInput.Event
 					== EMIE_LMOUSE_DOUBLE_CLICK);

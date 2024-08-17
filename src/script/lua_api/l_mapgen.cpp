@@ -860,7 +860,7 @@ int ModApiMapgen::l_get_mapgen_edges(lua_State *L)
 
 	s16 mapgen_limit;
 	if (lua_isnumber(L, 1)) {
-		 mapgen_limit = lua_tointeger(L, 1);
+		mapgen_limit = lua_tointeger(L, 1);
 	} else {
 		std::string mapgen_limit_str;
 		settingsmgr->getMapSetting("mapgen_limit", &mapgen_limit_str);

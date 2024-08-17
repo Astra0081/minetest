@@ -23,8 +23,8 @@ public:
 
 	//! constructor
 	GUIButton(gui::IGUIEnvironment* environment, gui::IGUIElement* parent,
-			   s32 id, core::rect<s32> rectangle, ISimpleTextureSource *tsrc,
-			   bool noclip=false);
+			s32 id, core::rect<s32> rectangle, ISimpleTextureSource *tsrc,
+			bool noclip=false);
 
 	//! destructor
 	virtual ~GUIButton();
@@ -91,8 +91,8 @@ public:
 	\param color: The color of the sprite
 	*/
 	virtual void setSprite(gui::EGUI_BUTTON_STATE state, s32 index,
-						   video::SColor color=video::SColor(255,255,255,255),
-						   bool loop=false) override;
+			video::SColor color=video::SColor(255,255,255,255),
+			bool loop=false) override;
 
 	//! Get the sprite-index for the given state or -1 when no sprite is set
 	virtual s32 getSpriteIndex(gui::EGUI_BUTTON_STATE state) const override;

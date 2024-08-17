@@ -47,12 +47,12 @@ class Translations;
 // Checks whether a value is in a Unicode private use area
 #define IS_PRIVATE_USE_CHAR16(x)    \
 	((wchar_t)(x) >= 0xE000 &&   \
-	  (wchar_t)(x) <= 0xF8FF)
+		(wchar_t)(x) <= 0xF8FF)
 #define IS_PRIVATE_USE_CHAR32(x)    \
 	(((wchar_t)(x) >= 0xF0000 &&  \
-	  (wchar_t)(x) <= 0xFFFFD) || \
-	 ((wchar_t)(x) >= 0x100000 && \
-	  (wchar_t)(x) <= 0x10FFFD))
+		( wchar_t)(x) <= 0xFFFFD) || \
+		((wchar_t)(x) >= 0x100000 && \
+		( wchar_t)(x) <= 0x10FFFD))
 #if WCHAR_MAX > 0xFFFF
 #define IS_PRIVATE_USE_CHAR(x) (IS_PRIVATE_USE_CHAR16(x) || IS_PRIVATE_USE_CHAR32(x))
 #else
@@ -743,9 +743,9 @@ inline std::string stringw_to_utf8(const irr::core::stringw &input)
 	return wide_to_utf8(sv);
 }
 
- /**
-  * Create an irr::core:stringw from a UTF8 std::string.
-  */
+/**
+ * Create an irr::core:stringw from a UTF8 std::string.
+ */
 inline irr::core::stringw utf8_to_stringw(std::string_view input)
 {
 	std::wstring str = utf8_to_wide(input);

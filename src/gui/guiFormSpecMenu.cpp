@@ -2820,8 +2820,8 @@ void GUIFormSpecMenu::parseModel(parserData *data, const std::string &element)
 	s32 frame_loop_end = 0x7FFFFFFF;
 
 	if (frame_loop.size() == 2) {
-	    frame_loop_begin = stoi(frame_loop[0]);
-	    frame_loop_end = stoi(frame_loop[1]);
+		frame_loop_begin = stoi(frame_loop[0]);
+		frame_loop_end = stoi(frame_loop[1]);
 	}
 
 	e->setFrameLoop(frame_loop_begin, frame_loop_end);
@@ -3930,7 +3930,7 @@ void GUIFormSpecMenu::acceptInput(FormspecQuitMode quitmode)
 							fields[name] = "CHG:" + itos(e->getPos());
 						else
 							fields[name] = "VAL:" + itos(e->getPos());
- 					}
+					}
 				} else if (s.ftype == f_AnimatedImage) {
 					// No dynamic cast possible due to some distributions shipped
 					// without rtti support in Irrlicht
@@ -4075,10 +4075,10 @@ bool GUIFormSpecMenu::OnEvent(const SEvent& event)
 		}
 
 		if (event.KeyInput.PressedDown &&
-			(event.KeyInput.Key==KEY_RETURN ||
-			 event.KeyInput.Key==KEY_UP ||
-			 event.KeyInput.Key==KEY_DOWN)
-			) {
+				(event.KeyInput.Key==KEY_RETURN ||
+					event.KeyInput.Key==KEY_UP ||
+					event.KeyInput.Key==KEY_DOWN)
+				) {
 			switch (event.KeyInput.Key) {
 				case KEY_RETURN:
 					current_keys_pending.key_enter = true;

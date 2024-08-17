@@ -225,7 +225,7 @@ void Mapgen::getMapgenNames(std::vector<const char *> *mgnames, bool include_hid
 void Mapgen::setDefaultSettings(Settings *settings)
 {
 	settings->setDefault("mg_flags", flagdesc_mapgen,
-		 MG_CAVES | MG_DUNGEONS | MG_LIGHT | MG_DECORATIONS | MG_BIOMES | MG_ORES);
+			MG_CAVES | MG_DUNGEONS | MG_LIGHT | MG_DECORATIONS | MG_BIOMES | MG_ORES);
 
 	for (int i = 0; i < (int)MAPGEN_INVALID; ++i) {
 		MapgenParams *params = createMapgenParams((MapgenType)i);
@@ -783,7 +783,7 @@ void MapgenBasic::generateBiomes()
 		// If no stone surface detected in mapchunk column and a water surface
 		// biome fallback exists, add it to the biomemap. This avoids water
 		// surface decorations failing in deep water.
- 		if (biomemap[index] == BIOME_NONE && water_biome_index != 0)
+		if (biomemap[index] == BIOME_NONE && water_biome_index != 0)
 			biomemap[index] = water_biome_index;
 	}
 }

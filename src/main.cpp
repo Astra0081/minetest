@@ -742,7 +742,7 @@ static bool read_config_file(const Settings &cmd_args)
 		bool r = g_settings->readConfigFile(cmd_args.get("config").c_str());
 		if (!r) {
 			errorstream << "Could not read configuration from \""
-			            << cmd_args.get("config") << "\"" << std::endl;
+					<< cmd_args.get("config") << "\"" << std::endl;
 			return false;
 		}
 		g_settings_path = cmd_args.get("config");
@@ -881,7 +881,7 @@ static bool get_world_from_cmdline(GameParams *game_params, const Settings &cmd_
 		}
 		if (!found) {
 			dstream << _("World") << " '" << commanded_worldname
-			        << _("' not available. Available worlds:") << std::endl;
+					<< _("' not available. Available worlds:") << std::endl;
 			print_worldspecs(worldspecs, dstream);
 			return false;
 		}
@@ -926,7 +926,7 @@ static bool auto_select_world(GameParams *game_params)
 	if (worldspecs.size() == 1) {
 		world_path = worldspecs[0].path;
 		dstream <<_("Automatically selecting world at") << " ["
-		        << world_path << "]" << std::endl;
+				<< world_path << "]" << std::endl;
 	// If there are multiple worlds, list them
 	} else if (worldspecs.size() > 1 && game_params->is_dedicated_server) {
 		std::cerr << _("Multiple worlds are available.") << std::endl;
@@ -940,7 +940,7 @@ static bool auto_select_world(GameParams *game_params)
 		world_path = porting::path_user + DIR_DELIM + "worlds" +
 				DIR_DELIM + "world";
 		infostream << "Using default world at ["
-		           << world_path << "]" << std::endl;
+				<< world_path << "]" << std::endl;
 	}
 
 	assert(!world_path.empty());	// Post-condition
@@ -987,7 +987,7 @@ static bool get_game_from_cmdline(GameParams *game_params, const Settings &cmd_a
 			return false;
 		}
 		dstream << _("Using game specified by --gameid on the command line")
-		        << std::endl;
+				<< std::endl;
 		game_params->game_spec = commanded_gamespec;
 		return true;
 	}
@@ -1013,7 +1013,7 @@ static bool determine_subgame(GameParams *game_params)
 				// If this is a dedicated server and no gamespec has been specified,
 				// print a friendly error pointing to ContentDB.
 				errorstream << "To run a " PROJECT_NAME_C " server, you need to select a game using the '--gameid' argument." << std::endl
-				            << "Check out https://content.minetest.net for a selection of games to pick from and download." << std::endl;
+						<< "Check out https://content.minetest.net for a selection of games to pick from and download." << std::endl;
 			}
 
 			return false;
@@ -1025,8 +1025,8 @@ static bool determine_subgame(GameParams *game_params)
 			gamespec = game_params->game_spec;
 			if (game_params->game_spec.id != world_gameid) {
 				warningstream << "Using commanded gameid ["
-				            << gamespec.id << "]" << " instead of world gameid ["
-				            << world_gameid << "]" << std::endl;
+						<< gamespec.id << "]" << " instead of world gameid ["
+						<< world_gameid << "]" << std::endl;
 			}
 		} else {
 			// If world contains an embedded game, use it;
@@ -1038,7 +1038,7 @@ static bool determine_subgame(GameParams *game_params)
 
 	if (!gamespec.isValid()) {
 		errorstream << "Game [" << gamespec.id << "] could not be found."
-		            << std::endl;
+				<< std::endl;
 		return false;
 	}
 
@@ -1053,9 +1053,9 @@ static bool determine_subgame(GameParams *game_params)
 static bool run_dedicated_server(const GameParams &game_params, const Settings &cmd_args)
 {
 	verbosestream << _("Using world path") << " ["
-	              << game_params.world_path << "]" << std::endl;
+			<< game_params.world_path << "]" << std::endl;
 	verbosestream << _("Using gameid") << " ["
-	              << game_params.game_spec.id << "]" << std::endl;
+			<< game_params.game_spec.id << "]" << std::endl;
 
 	// Database migration/compression
 	if (cmd_args.exists("migrate"))
@@ -1088,8 +1088,8 @@ static bool run_dedicated_server(const GameParams &game_params, const Settings &
 	}
 	if (bind_addr.isIPv6() && !g_settings->getBool("enable_ipv6")) {
 		errorstream << "Unable to listen on "
-		            << bind_addr.serializeString()
-		            << " because IPv6 is disabled" << std::endl;
+				<< bind_addr.serializeString()
+				<< " because IPv6 is disabled" << std::endl;
 		return false;
 	}
 

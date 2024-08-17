@@ -193,9 +193,9 @@ void ScriptApiBase::clientOpenLibs(lua_State *L)
 	};
 
 	for (const auto &lib : m_libs) {
-	    lua_pushcfunction(L, lib.second);
-	    lua_pushstring(L, lib.first.c_str());
-	    lua_call(L, 1, 0);
+		lua_pushcfunction(L, lib.second);
+		lua_pushstring(L, lib.first.c_str());
+		lua_call(L, 1, 0);
 	}
 }
 #endif

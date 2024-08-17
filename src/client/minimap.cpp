@@ -92,8 +92,8 @@ void MinimapUpdateThread::doUpdate()
 	while (popBlockUpdate(&update)) {
 		if (update.data) {
 			// Swap two values in the map using single lookup
-			std::pair<std::map<v3s16, MinimapMapblock*>::iterator, bool>
-			    result = m_blocks_cache.insert(std::make_pair(update.pos, update.data));
+			std::pair<std::map<v3s16, MinimapMapblock*>::iterator, bool> result =
+					m_blocks_cache.insert(std::make_pair(update.pos, update.data));
 			if (!result.second) {
 				delete result.first->second;
 				result.first->second = update.data;
@@ -494,8 +494,8 @@ video::ITexture *Minimap::getMinimapTexture()
 		// Want to use texture source, to : 1 find texture, 2 cache it
 		video::ITexture* texture = m_tsrc->getTexture(data->mode.texture);
 		video::IImage* image = driver->createImageFromData(
-			 texture->getColorFormat(), texture->getSize(),
-			 texture->lock(video::ETLM_READ_ONLY), true, false);
+				texture->getColorFormat(), texture->getSize(),
+				texture->lock(video::ETLM_READ_ONLY), true, false);
 		texture->unlock();
 
 		auto dim = image->getDimension();

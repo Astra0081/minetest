@@ -267,7 +267,7 @@ static EKEY_CODE id_to_keycode(touch_gui_button_id id)
 	} catch (UnknownKeycode &e) {
 		code = KEY_UNKNOWN;
 		warningstream << "TouchScreenGUI: Unknown key '" << resolved
-			      << "' for '" << key << "', hiding button." << std::endl;
+				<< "' for '" << key << "', hiding button." << std::endl;
 	}
 	return code;
 }
@@ -570,7 +570,7 @@ void TouchScreenGUI::translateEvent(const SEvent &event)
 
 			toggleOverflowMenu();
 			// refresh since visibility of buttons has changed
-		 	element = m_guienv->getRootGUIElement()->getElementFromPoint(touch_pos);
+			element = m_guienv->getRootGUIElement()->getElementFromPoint(touch_pos);
 			// restore after releaseAll in toggleOverflowMenu
 			m_pointer_downpos[pointer_id] = touch_pos;
 			m_pointer_pos[pointer_id] = touch_pos;

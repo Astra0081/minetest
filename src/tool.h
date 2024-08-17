@@ -89,9 +89,9 @@ struct WearBarParams
 {
 	std::map<f32, video::SColor> colorStops;
 	enum BlendMode : u8 {
-	    BLEND_MODE_CONSTANT,
-	    BLEND_MODE_LINEAR,
-	    BlendMode_END // Dummy for validity check
+		BLEND_MODE_CONSTANT,
+		BLEND_MODE_LINEAR,
+		BlendMode_END // Dummy for validity check
 	};
 	constexpr const static EnumString es_BlendMode[3] = {
 		{WearBarParams::BLEND_MODE_CONSTANT, "constant"},

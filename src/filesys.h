@@ -103,9 +103,9 @@ std::vector<std::string> GetRecursiveDirs(const std::string &dir);
    ignore - paths that start with these charcters will not be listed.
 */
 void GetRecursiveSubPaths(const std::string &path,
-		  std::vector<std::string> &dst,
-		  bool list_files,
-		  const std::set<char> &ignore = {});
+		std::vector<std::string> &dst,
+		bool list_files,
+		const std::set<char> &ignore = {});
 
 // Only pass full paths to this one. True on success.
 bool RecursiveDeleteContent(const std::string &path);

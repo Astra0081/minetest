@@ -54,14 +54,14 @@ public:
 	irr_ptr(irr_ptr &&b) noexcept { reset(b.release()); }
 
 	template <typename B, class = typename std::enable_if<std::is_convertible<B *,
-					      ReferenceCounted *>::value>::type>
+			ReferenceCounted *>::value>::type>
 	irr_ptr(const irr_ptr<B> &b) noexcept
 	{
 		grab(b.get());
 	}
 
 	template <typename B, class = typename std::enable_if<std::is_convertible<B *,
-					      ReferenceCounted *>::value>::type>
+			ReferenceCounted *>::value>::type>
 	irr_ptr(irr_ptr<B> &&b) noexcept
 	{
 		reset(b.release());
@@ -89,7 +89,7 @@ public:
 	}
 
 	template <typename B, class = typename std::enable_if<std::is_convertible<B *,
-					      ReferenceCounted *>::value>::type>
+			ReferenceCounted *>::value>::type>
 	irr_ptr &operator=(const irr_ptr<B> &b) noexcept
 	{
 		grab(b.get());
@@ -97,7 +97,7 @@ public:
 	}
 
 	template <typename B, class = typename std::enable_if<std::is_convertible<B *,
-					      ReferenceCounted *>::value>::type>
+			ReferenceCounted *>::value>::type>
 	irr_ptr &operator=(irr_ptr<B> &&b) noexcept
 	{
 		reset(b.release());

@@ -355,7 +355,7 @@ void MapBlock::serialize(std::ostream &os_compressed, u8 version, bool disk, int
 	Buffer<u8> buf;
 	const u8 content_width = 2;
 	const u8 params_width = 2;
- 	if(disk)
+	if(disk)
 	{
 		MapNode *tmp_nodes = new MapNode[nodecount];
 		memcpy(tmp_nodes, data, nodecount * sizeof(MapNode));
@@ -553,13 +553,13 @@ void MapBlock::deSerialize(std::istream &in_compressed, u8 version, bool disk)
 		if (version < 29) {
 			// Timestamp
 			TRACESTREAM(<<"MapBlock::deSerialize "<<getPos()
-				    <<": Timestamp"<<std::endl);
+					<<": Timestamp"<<std::endl);
 			setTimestampNoChangedFlag(readU32(is));
 			m_disk_timestamp = m_timestamp;
 
 			// Node/id mapping
 			TRACESTREAM(<<"MapBlock::deSerialize "<<getPos()
-				    <<": NameIdMapping"<<std::endl);
+					<<": NameIdMapping"<<std::endl);
 			nimap.deSerialize(is);
 		}
 

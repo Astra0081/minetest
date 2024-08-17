@@ -67,7 +67,7 @@ public:
 		assert(id != 0); // Pre-condition
 		if (m_active.find(id) == m_active.end()) {
 			warningstream << "StaticObjectList::remove(): id=" << id << " not found"
-						  << std::endl;
+					<< std::endl;
 			return;
 		}
 		m_active.erase(id);
