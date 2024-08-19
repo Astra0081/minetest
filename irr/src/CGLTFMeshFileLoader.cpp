@@ -443,6 +443,16 @@ void SelfType::MeshExtractor::deferAddMesh(
 					new SSkinMeshBuffer(std::move(*vertices), std::move(indices)));
 			const auto buffer_id = m_irr_model->getMeshBufferCount() - 1;
 
+			if (primitive.material.has_value()) {
+				const auto &material = m_gltf_model.materials->at(*primitive.material);
+				if (material.pbrMetallicRoughness.has_value()) {
+					const auto &texture = material.pbrMetallicRoughness->baseColorTexture;
+					if (texture.has_value()) {
+						m_irr_model->setTextureSlot(buffer_id, static_cast<u32>(texture->index));
+					}
+				}
+			}
+
 			if (!skinIdx.has_value())
 				continue;
 			const auto &skin = m_gltf_model.skins->at(*skinIdx);
@@ -491,16 +501,6 @@ void SelfType::MeshExtractor::deferAddMesh(
 						weight->buffer_id = buffer_id;
 						weight->vertex_id = v;
 						weight->strength = strength;
-					}
-				}
-			}
-
-			if (primitive.material.has_value()) {
-				const auto &material = m_gltf_model.materials->at(*primitive.material);
-				if (material.pbrMetallicRoughness.has_value()) {
-					const auto &texture = material.pbrMetallicRoughness->baseColorTexture;
-					if (texture.has_value()) {
-						m_irr_model->setTextureSlot(buffer_id, static_cast<u32>(texture->index));
 					}
 				}
 			}
