@@ -104,11 +104,11 @@ Inventory *ServerInventoryManager::createDetachedInventory(
 {
 	if (m_detached_inventories.count(name) > 0) {
 		infostream << "Server clearing detached inventory \"" << name << "\""
-			   << std::endl;
+				<< std::endl;
 		m_detached_inventories[name].inventory.reset();
 	} else {
 		infostream << "Server creating detached inventory \"" << name << "\""
-			   << std::endl;
+				<< std::endl;
 	}
 
 	auto inv_u = std::make_unique<Inventory>(idef);

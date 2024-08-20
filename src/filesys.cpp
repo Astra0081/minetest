@@ -109,7 +109,7 @@ std::vector<DirListNode> GetDirListing(const std::string &pathstring)
 					<< " Error is " << dwError << std::endl;
 			listing.clear();
 			return listing;
- 		}
+		}
 	}
 	return listing;
 }
@@ -591,9 +591,9 @@ std::vector<std::string> GetRecursiveDirs(const std::string &dir)
 }
 
 void GetRecursiveSubPaths(const std::string &path,
-		  std::vector<std::string> &dst,
-		  bool list_files,
-		  const std::set<char> &ignore)
+		std::vector<std::string> &dst,
+		bool list_files,
+		const std::set<char> &ignore)
 {
 	std::vector<DirListNode> content = GetDirListing(path);
 	for (const auto &n : content) {
@@ -726,7 +726,7 @@ bool PathStartsWith(const std::string &path, const std::string &prefix)
 			if(prefixpos == prefixsize)
 				return true;
 			// Return false if path has ended (at delimiter/EOS)
-            // while prefix did not.
+			// while prefix did not.
 			if(pathpos == pathsize)
 				return false;
 		}

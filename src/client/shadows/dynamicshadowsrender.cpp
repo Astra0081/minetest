@@ -143,12 +143,12 @@ void ShadowRenderer::initialize()
 
 
 	m_texture_format = m_shadow_map_texture_32bit
-					   ? video::ECOLOR_FORMAT::ECF_R32F
-					   : video::ECOLOR_FORMAT::ECF_R16F;
+			? video::ECOLOR_FORMAT::ECF_R32F
+			: video::ECOLOR_FORMAT::ECF_R16F;
 
 	m_texture_format_color = m_shadow_map_texture_32bit
-						 ? video::ECOLOR_FORMAT::ECF_G32R32F
-						 : video::ECOLOR_FORMAT::ECF_G16R16F;
+			? video::ECOLOR_FORMAT::ECF_G32R32F
+			: video::ECOLOR_FORMAT::ECF_G16R16F;
 
 	m_shadows_enabled &= m_shadows_supported;
 }

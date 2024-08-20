@@ -272,9 +272,9 @@ static video::IImage *createInventoryCubeImage(
 			4, -4, 4 * (size - 1),
 			2, 2, 0,
 			{
-				                {2, 0}, {3, 0}, {4, 0}, {5, 0},
+						{2, 0}, {3, 0}, {4, 0}, {5, 0},
 				{0, 1}, {1, 1}, {2, 1}, {3, 1}, {4, 1}, {5, 1}, {6, 1}, {7, 1},
-				                {2, 2}, {3, 2}, {4, 2}, {5, 2},
+						{2, 2}, {3, 2}, {4, 2}, {5, 2},
 			});
 
 	draw_image(left, 0.836660f,
@@ -286,14 +286,14 @@ static video::IImage *createInventoryCubeImage(
 				{0, 2}, {1, 2}, {2, 2}, {3, 2},
 				{0, 3}, {1, 3}, {2, 3}, {3, 3},
 				{0, 4}, {1, 4}, {2, 4}, {3, 4},
-				                {2, 5}, {3, 5},
+						{2, 5}, {3, 5},
 			});
 
 	draw_image(right, 0.670820f,
 			4, 0, 4 * size,
 			-2, 5, 4 * size - 2,
 			{
-				                {2, 0}, {3, 0},
+						{2, 0}, {3, 0},
 				{0, 1}, {1, 1}, {2, 1}, {3, 1},
 				{0, 2}, {1, 2}, {2, 2}, {3, 2},
 				{0, 3}, {1, 3}, {2, 3}, {3, 3},
@@ -1466,7 +1466,7 @@ bool ImageSource::generateImagePart(std::string_view part_of_name,
 			color = color as ColorString
 		*/
 		else if (str_starts_with(part_of_name, "[multiply:") ||
-		         str_starts_with(part_of_name, "[screen:")) {
+				str_starts_with(part_of_name, "[screen:")) {
 			Strfnd sf(part_of_name);
 			sf.next(":");
 			std::string color_str = sf.next(":");
@@ -1735,7 +1735,7 @@ bool ImageSource::generateImagePart(std::string_view part_of_name,
 			colored glass, like	"Colorize" in GIMP.
 		*/
 		else if (str_starts_with(part_of_name, "[hsl:") ||
-		         str_starts_with(part_of_name, "[colorizehsl:")) {
+				str_starts_with(part_of_name, "[colorizehsl:")) {
 
 			CHECK_BASEIMG();
 
@@ -1772,7 +1772,7 @@ bool ImageSource::generateImagePart(std::string_view part_of_name,
 			Swapping the top layer and base layer is a Hard Light blend
 		*/
 		else if (str_starts_with(part_of_name, "[overlay:") ||
-		         str_starts_with(part_of_name, "[hardlight:")) {
+				str_starts_with(part_of_name, "[hardlight:")) {
 
 			CHECK_BASEIMG();
 

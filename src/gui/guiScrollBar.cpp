@@ -269,8 +269,9 @@ void GUIScrollBar::setPosRaw(const s32 &pos)
 	thumb_size = core::s32_clamp(thumb_size, thumb_min, thumb_area);
 	scroll_pos = core::s32_clamp(pos, min_pos, max_pos);
 
-	f32 f = core::isnotzero(range()) ? (f32(thumb_area) - f32(thumb_size)) / range()
-					 : 1.0f;
+	f32 f = core::isnotzero(range()) ?
+		(f32(thumb_area) - f32(thumb_size)) / range()
+		: 1.0f;
 	draw_center = s32((f32(scroll_pos - min_pos) * f) + (f32(thumb_size) * 0.5f)) +
 		border_size;
 }
@@ -381,7 +382,7 @@ void GUIScrollBar::refreshControls()
 		sprites = skin->getSpriteBank();
 		current_icon_color =
 				skin->getColor(isEnabled() ? EGDC_WINDOW_SYMBOL
-							   : EGDC_GRAY_WINDOW_SYMBOL);
+					: EGDC_GRAY_WINDOW_SYMBOL);
 	}
 	if (is_horizontal) {
 		s32 h = RelativeRect.getHeight();

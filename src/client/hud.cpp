@@ -400,8 +400,8 @@ void Hud::drawLuaElements(const v3s16 &camera_offset)
 					ttfont = static_cast<irr::gui::CGUITTFont *>(textfont);
 
 				video::SColor color(255, (e->number >> 16) & 0xFF,
-										 (e->number >> 8)  & 0xFF,
-										 (e->number >> 0)  & 0xFF);
+						(e->number >> 8)  & 0xFF,
+						(e->number >> 0)  & 0xFF);
 				EnrichedString text(unescape_string(utf8_to_wide(e->text)), color);
 				core::dimension2d<u32> textsize = textfont->getDimension(text.c_str());
 
@@ -444,8 +444,8 @@ void Hud::drawLuaElements(const v3s16 &camera_offset)
 
 				pos += v2s32(e->offset.X, e->offset.Y);
 				video::SColor color(255, (e->number >> 16) & 0xFF,
-										 (e->number >> 8)  & 0xFF,
-										 (e->number >> 0)  & 0xFF);
+						(e->number >> 8)  & 0xFF,
+						(e->number >> 0)  & 0xFF);
 				std::wstring text = unescape_translate(utf8_to_wide(e->name));
 				const std::string &unit = e->text;
 				// Waypoints reuse the item field to store precision,
@@ -482,17 +482,20 @@ void Hud::drawLuaElements(const v3s16 &camera_offset)
 				const video::SColor color(255, 255, 255, 255);
 				const video::SColor colors[] = {color, color, color, color};
 				core::dimension2di imgsize(texture->getOriginalSize());
-				v2s32 dstsize(imgsize.Width * e->scale.X * m_scale_factor,
-				              imgsize.Height * e->scale.Y * m_scale_factor);
+				v2s32 dstsize(
+						imgsize.Width * e->scale.X * m_scale_factor,
+						imgsize.Height * e->scale.Y * m_scale_factor);
 				if (e->scale.X < 0)
 					dstsize.X = m_screensize.X * (e->scale.X * -0.01);
 				if (e->scale.Y < 0)
 					dstsize.Y = m_screensize.Y * (e->scale.Y * -0.01);
-				v2s32 offset((e->align.X - 1.0) * dstsize.X / 2,
-				             (e->align.Y - 1.0) * dstsize.Y / 2);
+				v2s32 offset(
+						(e->align.X - 1.0) * dstsize.X / 2,
+						(e->align.Y - 1.0) * dstsize.Y / 2);
 				core::rect<s32> rect(0, 0, dstsize.X, dstsize.Y);
-				rect += pos + offset + v2s32(e->offset.X * m_scale_factor,
-				                             e->offset.Y * m_scale_factor);
+				rect += pos + offset +
+						v2s32(e->offset.X * m_scale_factor,
+								e->offset.Y * m_scale_factor);
 				draw2DImageFilterScaled(driver, texture, rect,
 					core::rect<s32>(core::position2d<s32>(0,0), imgsize),
 					NULL, colors, true);
@@ -550,14 +553,17 @@ void Hud::drawLuaElements(const v3s16 &camera_offset)
 				if (!client->getMinimap())
 					break;
 				// Draw a minimap of size "size"
-				v2s32 dstsize(e->size.X * m_scale_factor,
-				              e->size.Y * m_scale_factor);
+				v2s32 dstsize(
+						e->size.X * m_scale_factor,
+						e->size.Y * m_scale_factor);
 				// (no percent size as minimap would likely be anamorphosed)
-				v2s32 offset((e->align.X - 1.0) * dstsize.X / 2,
-				             (e->align.Y - 1.0) * dstsize.Y / 2);
+				v2s32 offset(
+						(e->align.X - 1.0) * dstsize.X / 2,
+						(e->align.Y - 1.0) * dstsize.Y / 2);
 				core::rect<s32> rect(0, 0, dstsize.X, dstsize.Y);
-				rect += pos + offset + v2s32(e->offset.X * m_scale_factor,
-				                             e->offset.Y * m_scale_factor);
+				rect += pos + offset +
+						v2s32(e->offset.X * m_scale_factor,
+								e->offset.Y * m_scale_factor);
 				client->getMinimap()->drawMinimap(rect);
 				break; }
 			default:

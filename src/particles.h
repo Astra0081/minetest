@@ -341,7 +341,7 @@ struct ParticleSpawnerParameters : CommonParticleParams
 		attractor_origin, attractor_direction;
 	// object IDs
 	u16 attractor_attachment = 0,
-	    attractor_direction_attachment = 0;
+		attractor_direction_attachment = 0;
 	// do particles disappear when they cross the attractor threshold?
 	bool attractor_kill = true;
 

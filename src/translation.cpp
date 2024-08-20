@@ -112,7 +112,7 @@ void Translations::loadTranslation(const std::string &data)
 
 		if (i == wline.length()) {
 			errorstream << "Malformed translation line \"" << line << "\""
-			            << " in text domain " << textdomain_narrow << std::endl;
+					<< " in text domain " << textdomain_narrow << std::endl;
 			continue;
 		}
 		i++;

@@ -324,12 +324,12 @@ void MapblockMeshGenerator::generateCuboidTextureCoords(const aabb3f &box, f32 *
 	f32 ty2 = (box.MaxEdge.Y / BS) + 0.5;
 	f32 tz2 = (box.MaxEdge.Z / BS) + 0.5;
 	f32 txc[24] = {
-		    tx1, 1 - tz2,     tx2, 1 - tz1, // up
-		    tx1,     tz1,     tx2,     tz2, // down
-		    tz1, 1 - ty2,     tz2, 1 - ty1, // right
+		tx1    , 1 - tz2,     tx2, 1 - tz1, // up
+		tx1    ,     tz1,     tx2,     tz2, // down
+		tz1    , 1 - ty2,     tz2, 1 - ty1, // right
 		1 - tz2, 1 - ty2, 1 - tz1, 1 - ty1, // left
 		1 - tx2, 1 - ty2, 1 - tx1, 1 - ty1, // back
-		    tx1, 1 - ty2,     tx2, 1 - ty1, // front
+		tx1    , 1 - ty2,     tx2, 1 - ty1, // front
 	};
 	for (int i = 0; i != 24; ++i)
 		coords[i] = txc[i];
@@ -747,10 +747,10 @@ void MapblockMeshGenerator::drawLiquidTop()
 	// Rotate texture to make animation go in flow direction
 	// Positive if liquid moves towards +Z
 	f32 dz = (cur_liquid.corner_levels[0][0] + cur_liquid.corner_levels[0][1]) -
-	         (cur_liquid.corner_levels[1][0] + cur_liquid.corner_levels[1][1]);
+			(cur_liquid.corner_levels[1][0] + cur_liquid.corner_levels[1][1]);
 	// Positive if liquid moves towards +X
 	f32 dx = (cur_liquid.corner_levels[0][0] + cur_liquid.corner_levels[1][0]) -
-	         (cur_liquid.corner_levels[0][1] + cur_liquid.corner_levels[1][1]);
+			(cur_liquid.corner_levels[0][1] + cur_liquid.corner_levels[1][1]);
 	v2f tcoord_center(0.5, 0.5);
 	v2f tcoord_translate(blockpos_nodes.Z + cur_node.p.Z,
 			blockpos_nodes.X + cur_node.p.X);
@@ -985,12 +985,14 @@ void MapblockMeshGenerator::drawGlasslikeFramedNode()
 		// convert it to -0.5 .. 0.5
 		float vlev = (param2 / 63.0f) * 2.0f - 1.0f;
 		getSpecialTile(0, &cur_node.tile);
-		drawAutoLightedCuboid(aabb3f(-(nb[5] ? g : b),
-		                             -(nb[4] ? g : b),
-		                             -(nb[3] ? g : b),
-		                              (nb[2] ? g : b),
-		                              (nb[1] ? g : b) * vlev,
-		                              (nb[0] ? g : b)));
+		drawAutoLightedCuboid(
+				aabb3f(
+						-(nb[5] ? g : b),
+						-(nb[4] ? g : b),
+						-(nb[3] ? g : b),
+						(nb[2] ? g : b),
+						(nb[1] ? g : b) * vlev,
+						(nb[0] ? g : b)));
 	}
 }
 
@@ -1347,8 +1349,9 @@ void MapblockMeshGenerator::drawFencelikeNode()
 	static const f32 bar_len  = BS / 2 - post_rad;
 
 	// The post - always present
-	static const aabb3f post(-post_rad, -BS / 2, -post_rad,
-	                          post_rad,  BS / 2,  post_rad);
+	static const aabb3f post(
+			-post_rad, -BS / 2, -post_rad,
+			post_rad,  BS / 2,  post_rad);
 	static const f32 postuv[24] = {
 		0.375, 0.375, 0.625, 0.625,
 		0.375, 0.375, 0.625, 0.625,
@@ -1368,10 +1371,12 @@ void MapblockMeshGenerator::drawFencelikeNode()
 	MapNode n2 = data->m_vmanip.getNodeNoEx(blockpos_nodes + p2);
 	const ContentFeatures *f2 = &nodedef->get(n2);
 	if (f2->drawtype == NDT_FENCELIKE) {
-		static const aabb3f bar_x1(BS / 2 - bar_len,  BS / 4 - bar_rad, -bar_rad,
-		                           BS / 2 + bar_len,  BS / 4 + bar_rad,  bar_rad);
-		static const aabb3f bar_x2(BS / 2 - bar_len, -BS / 4 - bar_rad, -bar_rad,
-		                           BS / 2 + bar_len, -BS / 4 + bar_rad,  bar_rad);
+		static const aabb3f bar_x1(
+				BS / 2 - bar_len,  BS / 4 - bar_rad, -bar_rad,
+				BS / 2 + bar_len,  BS / 4 + bar_rad,  bar_rad);
+		static const aabb3f bar_x2(
+				BS / 2 - bar_len, -BS / 4 - bar_rad, -bar_rad,
+				BS / 2 + bar_len, -BS / 4 + bar_rad,  bar_rad);
 		static const f32 xrailuv[24] = {
 			0.000, 0.125, 1.000, 0.250,
 			0.000, 0.250, 1.000, 0.375,
@@ -1390,10 +1395,12 @@ void MapblockMeshGenerator::drawFencelikeNode()
 	n2 = data->m_vmanip.getNodeNoEx(blockpos_nodes + p2);
 	f2 = &nodedef->get(n2);
 	if (f2->drawtype == NDT_FENCELIKE) {
-		static const aabb3f bar_z1(-bar_rad,  BS / 4 - bar_rad, BS / 2 - bar_len,
-		                            bar_rad,  BS / 4 + bar_rad, BS / 2 + bar_len);
-		static const aabb3f bar_z2(-bar_rad, -BS / 4 - bar_rad, BS / 2 - bar_len,
-		                            bar_rad, -BS / 4 + bar_rad, BS / 2 + bar_len);
+		static const aabb3f bar_z1(
+				-bar_rad,  BS / 4 - bar_rad, BS / 2 - bar_len,
+				bar_rad,  BS / 4 + bar_rad, BS / 2 + bar_len);
+		static const aabb3f bar_z2(
+				-bar_rad, -BS / 4 - bar_rad, BS / 2 - bar_len,
+				bar_rad, -BS / 4 + bar_rad, BS / 2 + bar_len);
 		static const f32 zrailuv[24] = {
 			0.1875, 0.0625, 0.3125, 0.3125, // cannot rotate; stretch
 			0.2500, 0.0625, 0.3750, 0.3125, // for wood texture instead
@@ -1437,8 +1444,8 @@ namespace {
 		int angle;
 	};
 	static const RailDesc rail_kinds[16] = {
-		                 // +x -x -z +z
-		                 //-------------
+		//                  +x -x -z +z
+		//                 -------------
 		{straight,   0}, //  .  .  .  .
 		{straight,   0}, //  .  .  . +Z
 		{straight,   0}, //  .  . -Z  .

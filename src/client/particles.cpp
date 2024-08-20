@@ -227,8 +227,8 @@ void Particle::updateVertices(ClientEnvironment *env, video::SColor color)
 	}
 
 	auto half = m_p.size * .5f,
-	     hx   = half * scale.X,
-	     hy   = half * scale.Y;
+			hx   = half * scale.X,
+			hy   = half * scale.Y;
 	vertices[0] = video::S3DVertex(-hx, -hy,
 		0, 0, 0, 0, color, tx0, ty1);
 	vertices[1] = video::S3DVertex(hx, -hy,
@@ -480,7 +480,7 @@ void ParticleSpawner::spawnParticle(ClientEnvironment *env, float radius,
 			// from flickering back on just before the particle dies
 			a.length = (pp.expirationtime / -a.length) + 0.1;
 		} else if (pp.animation.type == TAT_SHEET_2D &&
-				   pp.animation.sheet_2d.frame_length < 0) {
+				pp.animation.sheet_2d.frame_length < 0) {
 			auto& a = pp.animation.sheet_2d;
 			auto frames = a.frames_w * a.frames_h;
 			auto runtime = (pp.expirationtime / -a.frame_length) + 0.1;
@@ -958,7 +958,7 @@ video::SMaterial ParticleManager::getMaterialForParticle(const ClientParticleTex
 	video::E_BLEND_FACTOR bfsrc, bfdst;
 	video::E_BLEND_OPERATION blendop;
 	const auto blendmode = texture.tex ? texture.tex->blendmode :
-						   ParticleParamTypes::BlendMode::alpha;
+			ParticleParamTypes::BlendMode::alpha;
 
 	switch (blendmode) {
 		case ParticleParamTypes::BlendMode::add:

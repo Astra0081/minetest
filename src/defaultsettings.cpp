@@ -46,8 +46,8 @@ static bool detect_touch()
 		chassis_type.pop_back();
 
 		if (chassis_type == "tablet" ||
-		    chassis_type == "handset" ||
-		    chassis_type == "watch")
+				chassis_type == "handset" ||
+				chassis_type == "watch")
 			return true;
 
 		if (!chassis_type.empty())
@@ -59,7 +59,7 @@ static bool detect_touch()
 		std::getline(dmi_file, chassis_type);
 
 		if (chassis_type == "11" /* Handheld */ ||
-		    chassis_type == "30" /* Tablet */)
+				chassis_type == "30" /* Tablet */)
 			return true;
 
 		return false;

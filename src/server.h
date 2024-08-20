@@ -94,7 +94,7 @@ struct MediaInfo
 	bool delete_at_shutdown;
 
 	MediaInfo(std::string_view path_ = "",
-	          std::string_view sha1_digest_ = ""):
+			std::string_view sha1_digest_ = ""):
 		path(path_),
 		sha1_digest(sha1_digest_),
 		no_announce(false),

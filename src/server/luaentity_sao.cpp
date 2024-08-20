@@ -362,9 +362,9 @@ u32 LuaEntitySAO::punch(v3f dir,
 		actionstream << "(none)";
 	}
 	actionstream << " punched " <<
-		  getDescription() << " (id=" << m_id << ", hp=" << m_hp <<
-		  "), damage=" << (old_hp - (s32)getHP()) <<
-		  (damage_handled ? " (handled by Lua)" : "") << std::endl;
+			getDescription() << " (id=" << m_id << ", hp=" << m_hp <<
+			"), damage=" << (old_hp - (s32)getHP()) <<
+			(damage_handled ? " (handled by Lua)" : "") << std::endl;
 	// TODO: give Lua control over wear
 	return result.wear;
 }

@@ -304,9 +304,9 @@ bool GUIEditBox::processKey(const SEvent &event)
 			if (m_word_wrap || m_multiline) {
 				p = getLineFromPos(m_cursor_pos);
 				p = m_broken_text_positions[p] +
-				    (s32)m_broken_text[p].size();
+					(s32)m_broken_text[p].size();
 				if (p > 0 && (Text[p - 1] == L'\r' ||
-							     Text[p - 1] == L'\n'))
+						Text[p - 1] == L'\n'))
 					p -= 1;
 			}
 
@@ -755,7 +755,7 @@ bool GUIEditBox::processMouse(const SEvent &event)
 			return true;
 		} else {
 			if (!AbsoluteClippingRect.isPointInside(core::position2d<s32>(
-					    event.MouseInput.X, event.MouseInput.Y))) {
+					event.MouseInput.X, event.MouseInput.Y))) {
 				return false;
 			} else {
 				// move cursor

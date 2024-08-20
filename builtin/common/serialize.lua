@@ -193,7 +193,7 @@ end
 function core.serialize(value)
 	local rope = {}
 	serialize(value, function(text)
-		 -- Faster than table.insert(rope, text) on PUC Lua 5.1
+		-- Faster than table.insert(rope, text) on PUC Lua 5.1
 		rope[#rope + 1] = text
 	end)
 	return table_concat(rope)

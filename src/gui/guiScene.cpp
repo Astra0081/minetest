@@ -24,8 +24,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "porting.h"
 
 GUIScene::GUIScene(gui::IGUIEnvironment *env, scene::ISceneManager *smgr,
-		   gui::IGUIElement *parent, core::recti rect, s32 id)
-	: IGUIElement(gui::EGUIET_ELEMENT, env, parent, id, rect)
+		gui::IGUIElement *parent, core::recti rect, s32 id)
+		: IGUIElement(gui::EGUIET_ELEMENT, env, parent, id, rect)
 {
 	m_driver = env->getVideoDriver();
 	m_smgr = smgr->createNewSceneManager(false);

@@ -100,7 +100,7 @@ struct TextDestNodeMetadata : public TextDest
 	{
 		std::string ntext = wide_to_utf8(text);
 		infostream << "Submitting 'text' field of node at (" << m_p.X << ","
-			   << m_p.Y << "," << m_p.Z << "): " << ntext << std::endl;
+				<< m_p.Y << "," << m_p.Z << "): " << ntext << std::endl;
 		StringMap fields;
 		fields["text"] = ntext;
 		m_client->sendNodemetaFields(m_p, "", fields);
@@ -1857,25 +1857,25 @@ inline bool Game::handleCallbacks()
 
 	if (g_gamecallback->changepassword_requested) {
 		(new GUIPasswordChange(guienv, guiroot, -1,
-				       &g_menumgr, client, texture_src))->drop();
+				&g_menumgr, client, texture_src))->drop();
 		g_gamecallback->changepassword_requested = false;
 	}
 
 	if (g_gamecallback->changevolume_requested) {
 		(new GUIVolumeChange(guienv, guiroot, -1,
-				     &g_menumgr, texture_src))->drop();
+				&g_menumgr, texture_src))->drop();
 		g_gamecallback->changevolume_requested = false;
 	}
 
 	if (g_gamecallback->keyconfig_requested) {
 		(new GUIKeyChangeMenu(guienv, guiroot, -1,
-				      &g_menumgr, texture_src))->drop();
+				&g_menumgr, texture_src))->drop();
 		g_gamecallback->keyconfig_requested = false;
 	}
 
 	if (!g_gamecallback->show_open_url_dialog.empty()) {
 		(new GUIOpenURLMenu(guienv, guiroot, -1,
-				 &g_menumgr, texture_src, g_gamecallback->show_open_url_dialog))->drop();
+				&g_menumgr, texture_src, g_gamecallback->show_open_url_dialog))->drop();
 		g_gamecallback->show_open_url_dialog.clear();
 	}
 
@@ -4083,7 +4083,7 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 		direct_brightness = client->getEnv().getClientMap()
 				.getBackgroundBrightness(MYMIN(runData.fog_range * 1.2, 60 * BS),
 					daynight_ratio, (int)(old_brightness * 255.5), &sunlight_seen)
-				    / 255.0;
+					/ 255.0;
 	}
 
 	float time_of_day_smooth = runData.time_of_day_smooth;

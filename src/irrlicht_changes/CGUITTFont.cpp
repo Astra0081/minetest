@@ -74,8 +74,8 @@ inline void checkFontBitmapSize(const FT_Bitmap &bits)
 {
 	if ((s32)bits.rows < 0 || (s32)bits.width < 0) {
 		std::cout << "Insane font glyph size. File: "
-		          << __FILE__ << " Line " << __LINE__
-		          << std::endl;
+				<< __FILE__ << " Line " << __LINE__
+				<< std::endl;
 		abort();
 	}
 }

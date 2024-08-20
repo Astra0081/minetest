@@ -79,12 +79,13 @@ do
 	minetest_client_commands[0x02] = {
 		"INIT",                            -- Command name
 		11,                                -- Minimum message length including code
-		{ f_ser_fmt,                       -- List of fields [optional]
-		  f_comp_modes,
-		  f_proto_min,
-		  f_proto_max,
-		  f_player_namelen,
-		  f_player_name },
+		{
+			f_ser_fmt,                       -- List of fields [optional]
+			f_comp_modes,
+			f_proto_min,
+			f_proto_max,
+			f_player_namelen,
+			f_player_name },
 		function(buffer, pinfo, tree, t)   -- Dissector function [optional]
 			t:add(f_ser_fmt, buffer(2,1))
 			t:add(f_comp_modes, buffer(3,2))
@@ -110,7 +111,7 @@ do
 		"INIT2",
 		2,
 		{ f_langlen,
-		  f_lang },
+			f_lang },
 		function(buffer, pinfo, tree, t)
 			minetest_decode_helper_ascii(buffer, t, "uint16", 2, f_langlen, f_lang)
 		end
@@ -164,7 +165,7 @@ do
 	minetest_client_commands[0x23] = {
 		"PLAYERPOS", 34,
 		{ f_x, f_y, f_z, f_speed_x, f_speed_y, f_speed_z, f_pitch, f_yaw,
-		  f_key_pressed, f_fov, f_wanted_range },
+			f_key_pressed, f_fov, f_wanted_range },
 		function(buffer, pinfo, tree, t)
 			t:add(f_x, buffer(2,4))
 			t:add(f_y, buffer(6,4))
@@ -396,18 +397,19 @@ do
 
 	minetest_client_commands[0x39] = {
 		"INTERACT", 11,
-		{ f_action,
-		  f_item,
-		  f_plen,
-		  f_pointed_version,
-		  f_pointed_type,
-		  f_pointed_under_x,
-		  f_pointed_under_y,
-		  f_pointed_under_z,
-		  f_pointed_above_x,
-		  f_pointed_above_y,
-		  f_pointed_above_z,
-		  f_pointed_object_id },
+		{
+			f_action,
+			f_item,
+			f_plen,
+			f_pointed_version,
+			f_pointed_type,
+			f_pointed_under_x,
+			f_pointed_under_y,
+			f_pointed_under_z,
+			f_pointed_above_x,
+			f_pointed_above_y,
+			f_pointed_above_z,
+			f_pointed_object_id },
 		function(buffer, pinfo, tree, t)
 			t:add(f_action, buffer(2,1))
 			t:add(f_item, buffer(3,2))
@@ -462,7 +464,7 @@ do
 		"CLIENT_READY",
 		8,
 		{ f_major, f_minor, f_patch, f_reserved, f_versionlen,
-		  f_version, f_formspec_ver },
+			f_version, f_formspec_ver },
 		function(buffer, pinfo, tree, t)
 			t:add(f_major, buffer(2,1))
 			t:add(f_minor, buffer(3,1))
@@ -513,7 +515,7 @@ do
 		"HELLO",
 		13,
 		{ f_ser_fmt, f_comp_mode, f_proto, f_auth_methods,
-		  f_legacy_namelen, f_legacy_name },
+			f_legacy_namelen, f_legacy_name },
 		function(buffer, pinfo, tree, t)
 			t:add(f_ser_fmt, buffer(2,1))
 			t:add(f_comp_mode, buffer(3,2))
@@ -542,7 +544,7 @@ do
 		"AUTH_ACCEPT",
 		30,
 		{ f_player_x, f_player_y, f_player_z, f_map_seed,
-		  f_send_interval, f_sudo_auth_methods },
+			f_send_interval, f_sudo_auth_methods },
 		function(buffer, pinfo, tree, t)
 			t:add(f_player_x, buffer(2,4))
 			t:add(f_player_y, buffer(6,4))
@@ -707,7 +709,7 @@ do
 	minetest_server_commands[0x2f] = {
 		"CHAT_MESSAGE", 8,
 		{ f_version, f_type, f_senderlen, f_sender,
-		  f_messagelen, f_message },
+			f_messagelen, f_message },
 		function(buffer, pinfo, tree, t)
 			t:add(f_version, buffer(2,1))
 			t:add(f_type, buffer(3,1))
@@ -760,8 +762,8 @@ do
 	minetest_server_commands[0x31] = {
 		"ACTIVE_OBJECT_REMOVE_ADD", 6,
 		{ f_removed_count, f_removed, f_removed_id,
-		  f_added_count, f_added, f_added_id,
-		  f_added_type, f_added_init_length, f_added_init_data },
+			f_added_count, f_added, f_added_id,
+			f_added_type, f_added_init_length, f_added_init_data },
 		function(buffer, pinfo, tree, t)
 			local t2, index, pos
 
@@ -950,7 +952,7 @@ do
 	minetest_server_commands[0x37] = {
 		"DEATHSCREEN", 15,
 		{ f_set_camera_point_target, f_camera_point_target_x,
-		  f_camera_point_target_y, f_camera_point_target_z},
+			f_camera_point_target_y, f_camera_point_target_z},
 		function(buffer, pinfo, tree, t)
 			t:add(f_set_camera_point_target, buffer(2,1))
 			t:add(f_camera_point_target_x, buffer(3,4))

@@ -53,8 +53,8 @@ public:
 		bool pos_ok;
 		MapNode n = env->getMap().getNode(floatToInt(pos, BS), &pos_ok);
 		light = pos_ok ? decode_light(n.getLightBlend(env->getDayNightRatio(),
-							env->getGameDef()->ndef()->getLightingFlags(n)))
-		               : 64;
+				env->getGameDef()->ndef()->getLightingFlags(n)))
+				: 64;
 		video::SColor color(255,light,light,light);
 		m_spritenode->setColor(color);
 	}

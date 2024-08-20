@@ -503,7 +503,7 @@ bool ClientLauncher::launch_game(std::string &error_message,
 
 	auto &worldspec = start_data.world_spec;
 	infostream << "Selected world: " << worldspec.name
-	           << " [" << worldspec.path << "]" << std::endl;
+			<< " [" << worldspec.path << "]" << std::endl;
 
 	if (start_data.address.empty()) {
 		// For singleplayer and local server

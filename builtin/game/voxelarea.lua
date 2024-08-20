@@ -46,16 +46,16 @@ end
 function VoxelArea:index(x, y, z)
 	local MinEdge = self.MinEdge
 	local i = (z - MinEdge.z) * self.zstride +
-			  (y - MinEdge.y) * self.ystride +
-			  (x - MinEdge.x) + 1
+			(y - MinEdge.y) * self.ystride +
+			(x - MinEdge.x) + 1
 	return math_floor(i)
 end
 
 function VoxelArea:indexp(p)
 	local MinEdge = self.MinEdge
 	local i = (p.z - MinEdge.z) * self.zstride +
-			  (p.y - MinEdge.y) * self.ystride +
-			  (p.x - MinEdge.x) + 1
+			(p.y - MinEdge.y) * self.ystride +
+			(p.x - MinEdge.x) + 1
 	return math_floor(i)
 end
 
@@ -78,15 +78,15 @@ end
 function VoxelArea:contains(x, y, z)
 	local MaxEdge, MinEdge = self.MaxEdge, self.MinEdge
 	return (x >= MinEdge.x) and (x <= MaxEdge.x) and
-		   (y >= MinEdge.y) and (y <= MaxEdge.y) and
-		   (z >= MinEdge.z) and (z <= MaxEdge.z)
+			(y >= MinEdge.y) and (y <= MaxEdge.y) and
+			(z >= MinEdge.z) and (z <= MaxEdge.z)
 end
 
 function VoxelArea:containsp(p)
 	local MaxEdge, MinEdge = self.MaxEdge, self.MinEdge
 	return (p.x >= MinEdge.x) and (p.x <= MaxEdge.x) and
-		   (p.y >= MinEdge.y) and (p.y <= MaxEdge.y) and
-		   (p.z >= MinEdge.z) and (p.z <= MaxEdge.z)
+			(p.y >= MinEdge.y) and (p.y <= MaxEdge.y) and
+			(p.z >= MinEdge.z) and (p.z <= MaxEdge.z)
 end
 
 function VoxelArea:containsi(i)

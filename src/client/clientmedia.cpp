@@ -452,7 +452,7 @@ void ClientMediaDownloader::startRemoteMediaTransfers()
 
 		if (filestatus->received ||
 				(filestatus->current_remote < 0 &&
-				 !m_outstanding_hash_sets)) {
+				!m_outstanding_hash_sets)) {
 			// If we arrive here, we conclusively know that we
 			// won't fetch this file from a remote server in the
 			// future. So update the name bound if possible.

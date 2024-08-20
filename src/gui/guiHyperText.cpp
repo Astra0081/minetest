@@ -790,7 +790,7 @@ void TextDrawer::place(const core::rect<s32> &dest_rect)
 										std::max(f.margin, p.margin);
 
 						} else if (f.rect.UpperLeftCorner.X - f.margin <= left &&
-							 	f.rect.LowerRightCorner.X + f.margin >= right) {
+								f.rect.LowerRightCorner.X + f.margin >= right) {
 							// float taking all space
 							left = right;
 						}
@@ -1124,7 +1124,7 @@ bool GUIHyperText::OnEvent(const SEvent &event)
 				for (auto &tag : element->tags) {
 					if (tag->name == "action") {
 						Text = core::stringw(L"action:") +
-						       utf8_to_stringw(tag->attrs["name"]);
+							utf8_to_stringw(tag->attrs["name"]);
 						if (Parent) {
 							SEvent newEvent;
 							newEvent.EventType = EET_GUI_EVENT;

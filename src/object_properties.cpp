@@ -68,7 +68,7 @@ std::string ObjectProperties::dump() const
 
 	if (nametag_bgcolor)
 		os << ", nametag_bgcolor=" << "\"" << nametag_color.getAlpha() << "," << nametag_color.getRed()
-		   << "," << nametag_color.getGreen() << "," << nametag_color.getBlue() << "\" ";
+			<< "," << nametag_color.getGreen() << "," << nametag_color.getBlue() << "\" ";
 	else
 		os << ", nametag_bgcolor=null ";
 

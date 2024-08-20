@@ -1095,7 +1095,7 @@ void Server::Receive(float timeout)
 					<< e.what() << std::endl;
 		} catch (const ClientStateError &e) {
 			errorstream << "ClientStateError: peer=" << peer_id << " what()="
-					 << e.what() << std::endl;
+					<< e.what() << std::endl;
 			DenyAccess(peer_id, SERVER_ACCESSDENIED_UNEXPECTED_DATA);
 		} catch (con::PeerNotFoundException &e) {
 			infostream << "Server: PeerNotFoundException" << std::endl;
@@ -1198,7 +1198,7 @@ void Server::ProcessData(NetworkPacket *pkt)
 		// Command must be handled into ToServerCommandHandler
 		if (command >= TOSERVER_NUM_MSG_TYPES) {
 			infostream << "Server: Ignoring unknown command "
-					 << static_cast<unsigned>(command) << std::endl;
+					<< static_cast<unsigned>(command) << std::endl;
 			return;
 		}
 

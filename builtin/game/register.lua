@@ -247,17 +247,17 @@ function core.register_tool(name, tooldef)
 		tooldef.inventory_image = tooldef.image
 	end
 	if tooldef.tool_capabilities == nil and
-	   (tooldef.full_punch_interval ~= nil or
-	    tooldef.basetime ~= nil or
-	    tooldef.dt_weight ~= nil or
-	    tooldef.dt_crackiness ~= nil or
-	    tooldef.dt_crumbliness ~= nil or
-	    tooldef.dt_cuttability ~= nil or
-	    tooldef.basedurability ~= nil or
-	    tooldef.dd_weight ~= nil or
-	    tooldef.dd_crackiness ~= nil or
-	    tooldef.dd_crumbliness ~= nil or
-	    tooldef.dd_cuttability ~= nil) then
+			(tooldef.full_punch_interval ~= nil or
+			tooldef.basetime ~= nil or
+			tooldef.dt_weight ~= nil or
+			tooldef.dt_crackiness ~= nil or
+			tooldef.dt_crumbliness ~= nil or
+			tooldef.dt_cuttability ~= nil or
+			tooldef.basedurability ~= nil or
+			tooldef.dd_weight ~= nil or
+			tooldef.dd_crackiness ~= nil or
+			tooldef.dd_crumbliness ~= nil or
+			tooldef.dd_cuttability ~= nil) then
 		tooldef.tool_capabilities = {
 			full_punch_interval = tooldef.full_punch_interval,
 			basetime = tooldef.basetime,

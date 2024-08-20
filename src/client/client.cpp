@@ -974,7 +974,7 @@ void Client::ReceiveAll()
 		} catch (const con::InvalidIncomingDataException &e) {
 			infostream << "Client::ReceiveAll(): "
 					"InvalidIncomingDataException: what()="
-					 << e.what() << std::endl;
+					<< e.what() << std::endl;
 		}
 	}
 }

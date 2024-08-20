@@ -433,8 +433,9 @@ CraftInput CraftDefinitionShaped::getInput(const CraftOutput &output, IGameDef *
 	return CraftInput(CRAFT_METHOD_NORMAL,width,craftGetItems(recipe,gamedef));
 }
 
-void CraftDefinitionShaped::decrementInput(CraftInput &input, std::vector<ItemStack> &output_replacements,
-	 IGameDef *gamedef) const
+void CraftDefinitionShaped::decrementInput(CraftInput &input,
+		std::vector<ItemStack> &output_replacements,
+		IGameDef *gamedef) const
 {
 	craftDecrementOrReplaceInput(input, output_replacements, replacements, gamedef);
 }

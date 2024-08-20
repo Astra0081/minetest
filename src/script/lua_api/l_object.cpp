@@ -1580,7 +1580,7 @@ int ObjectRef::l_get_formspec_prepend(lua_State *L)
 	ObjectRef *ref = checkObject<ObjectRef>(L, 1);
 	RemotePlayer *player = getplayer(ref);
 	if (player == nullptr)
-		 return 0;
+		return 0;
 
 	auto &formspec = player->formspec_prepend;
 

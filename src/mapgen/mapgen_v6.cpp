@@ -1092,7 +1092,7 @@ void MapgenV6::generateCaves(int max_stone_y)
 {
 	float cave_amount = NoisePerlin2D(np_cave, node_min.X, node_min.Y, seed);
 	int volume_nodes = (node_max.X - node_min.X + 1) *
-					   (node_max.Y - node_min.Y + 1) * MAP_BLOCKSIZE;
+		(node_max.Y - node_min.Y + 1) * MAP_BLOCKSIZE;
 	cave_amount = MYMAX(0.0, cave_amount);
 	u32 caves_count = cave_amount * volume_nodes / 50000;
 	u32 bruises_count = 1;
