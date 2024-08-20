@@ -251,7 +251,7 @@ register_builtin_hud_element("minimap", {
 		position = {x = 1, y = 0},
 		alignment = {x = -1, y = 1},
 		offset = {x = -10, y = 10},
-		size = {x = 256, y = 256},
+		size = {x = 0, y = -25},
 	},
 	show_elem = function(player, flags)
 		-- Don't add a minimap for clients which already have it hardcoded in C++.
