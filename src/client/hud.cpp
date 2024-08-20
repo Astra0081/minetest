@@ -545,6 +545,8 @@ void Hud::drawLuaElements(const v3s16 &camera_offset)
 				}
 				break; }
 			case HUD_ELEM_MINIMAP: {
+				if (e->size.X == 0 || e->size.Y == 0)
+					break;
 				if (!client->getMinimap())
 					break;
 				// Draw a minimap of size "size"
@@ -556,9 +558,6 @@ void Hud::drawLuaElements(const v3s16 &camera_offset)
 					dstsize.X = dstsize.Y = m_screensize.X * (e->size.X * -0.01);
 				else if (e->size.Y < 0)
 					dstsize.X = dstsize.Y = m_screensize.Y * (e->size.Y * -0.01);
-
-				if (dstsize.X <= 0 || dstsize.Y <= 0)
-					return;
 
 				v2s32 offset((e->align.X - 1.0) * dstsize.X / 2,
 				             (e->align.Y - 1.0) * dstsize.Y / 2);
