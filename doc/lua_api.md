@@ -1806,6 +1806,7 @@ Displays a minimap on the HUD.
     is specified as a percentage, the resulting pixel size will be used for
     both `x` and `y`. Example: On a 1920x1080 screen, `{x = 0, y = -25}` will
     result in a 270x270 minimap.
+  * Negative values are supported starting with protocol version 45.
 * `alignment`: The alignment of the minimap.
 * `offset`: offset in pixels from position.
 
