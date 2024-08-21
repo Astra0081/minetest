@@ -77,11 +77,11 @@ ABMWithState::ABMWithState(ActiveBlockModifier *abm_):
 	LBMManager
 */
 
-void LBMContentMapping::deleteContents()
+LBMContentMapping::~LBMContentMapping()
 {
-	for (auto &it : lbm_list) {
+	map.clear();
+	for (auto &it : lbm_list)
 		delete it;
-	}
 }
 
 void LBMContentMapping::addLBM(LoadingBlockModifierDef *lbm_def, IGameDef *gamedef)
@@ -92,14 +92,14 @@ void LBMContentMapping::addLBM(LoadingBlockModifierDef *lbm_def, IGameDef *gamed
 
 	lbm_list.push_back(lbm_def);
 
-	for (const std::string &nodeTrigger: lbm_def->trigger_contents) {
+	for (const auto &node : lbm_def->trigger_contents) {
 		std::vector<content_t> c_ids;
-		bool found = nodedef->getIds(nodeTrigger, c_ids);
+		bool found = nodedef->getIds(node, c_ids);
 		if (!found) {
-			content_t c_id = gamedef->allocateUnknownNodeId(nodeTrigger);
+			content_t c_id = gamedef->allocateUnknownNodeId(node);
 			if (c_id == CONTENT_IGNORE) {
 				// Seems it can't be allocated.
-				warningstream << "Could not internalize node name \"" << nodeTrigger
+				warningstream << "Could not internalize node name \"" << node
 					<< "\" while loading LBM \"" << lbm_def->name << "\"." << std::endl;
 				continue;
 			}
@@ -112,7 +112,7 @@ void LBMContentMapping::addLBM(LoadingBlockModifierDef *lbm_def, IGameDef *gamed
 	}
 }
 
-const std::vector<LoadingBlockModifierDef *> *
+const LBMContentMapping::lbm_vector *
 LBMContentMapping::lookup(content_t c) const
 {
 	lbm_map::const_iterator it = map.find(c);
@@ -130,9 +130,7 @@ LBMManager::~LBMManager()
 		delete m_lbm_def.second;
 	}
 
-	for (auto &it : m_lbm_lookup) {
-		(it.second).deleteContents();
-	}
+	m_lbm_lookup.clear();
 }
 
 void LBMManager::addLBMDef(LoadingBlockModifierDef *lbm_def)
@@ -236,7 +234,7 @@ std::string LBMManager::createIntroductionTimesString()
 	std::ostringstream oss;
 	for (const auto &it : m_lbm_lookup) {
 		u32 time = it.first;
-		const std::vector<LoadingBlockModifierDef *> &lbm_list = it.second.lbm_list;
+		auto &lbm_list = it.second.getList();
 		for (const auto &lbm_def : lbm_list) {
 			// Don't add if the LBM runs at every load,
 			// then introducement time is hardcoded
@@ -255,39 +253,71 @@ void LBMManager::applyLBMs(ServerEnvironment *env, MapBlock *block,
 	// Precondition, we need m_lbm_lookup to be initialized
 	FATAL_ERROR_IF(!m_query_mode,
 		"attempted to query on non fully set up LBMManager");
-	v3s16 pos_of_block = block->getPosRelative();
-	v3s16 pos;
-	MapNode n;
-	content_t c;
-	auto it = getLBMsIntroducedAfter(stamp);
-	for (; it != m_lbm_lookup.end(); ++it) {
-		// Cache previous version to speedup lookup which has a very high performance
-		// penalty on each call
+
+	// Collect a list of all LBMs and associated positions
+	struct LBMToRun {
+		std::unordered_set<v3s16> p;
+		std::unordered_set<LoadingBlockModifierDef*> l;
+	};
+	std::unordered_map<content_t, LBMToRun> to_run;
+
+	// Note: the iteration count of this outer loop is typically very low, so it's ok.
+	for (auto it = getLBMsIntroducedAfter(stamp); it != m_lbm_lookup.end(); ++it) {
+		v3s16 pos;
+		content_t c;
+
+		// Cache previous lookup result since it has a high performance penalty.
 		content_t previous_c = CONTENT_IGNORE;
-		const std::vector<LoadingBlockModifierDef *> *lbm_list = nullptr;
+		const LBMContentMapping::lbm_vector *lbm_list = nullptr;
 
 		for (pos.Z = 0; pos.Z < MAP_BLOCKSIZE; pos.Z++)
 		for (pos.Y = 0; pos.Y < MAP_BLOCKSIZE; pos.Y++)
 		for (pos.X = 0; pos.X < MAP_BLOCKSIZE; pos.X++) {
-			n = block->getNodeNoCheck(pos);
-			c = n.getContent();
+			c = block->getNodeNoCheck(pos).getContent();
 
-			// If content_t are not matching perform an LBM lookup
+			bool c_changed = false;
 			if (previous_c != c) {
+				c_changed = true;
 				lbm_list = it->second.lookup(c);
 				previous_c = c;
 			}
 
 			if (!lbm_list)
 				continue;
-			for (auto lbmdef : *lbm_list) {
-				lbmdef->trigger(env, pos + pos_of_block, n, dtime_s);
-				if (block->isOrphan())
-					return;
-				n = block->getNodeNoCheck(pos);
-				if (n.getContent() != c)
-					break; // The node was changed and the LBMs no longer apply
+			auto &info = to_run[c];
+			info.p.insert(pos);
+			if (c_changed) {
+				info.l.insert(lbm_list->begin(), lbm_list->end());
+			} else {
+				// we were here before so the list must be filled
+				assert(!info.l.empty());
 			}
+		}
+	}
+
+	// Actually run them
+	bool first = true;
+	for (auto &[c, info] : to_run) {
+		for (auto &lbm_def : info.l) {
+			if (!first) {
+				// The fun part: since any LBM call can change the nodes inside of he
+				// block, we have to recheck the positions to see if the wanted node
+				// is still there.
+				// Note that we don't rescan the whole block, we don't want to include new changes.
+				for (auto it2 = info.p.begin(); it2 != info.p.end(); ) {
+					if (block->getNodeNoCheck(*it2).getContent() != c)
+						it2 = info.p.erase(it2);
+					else
+						++it2;
+				}
+				if (info.p.empty())
+					break;
+			}
+			first = false;
+
+			lbm_def->trigger(env, block, info.p, dtime_s);
+			if (block->isOrphan())
+				return;
 		}
 	}
 }
