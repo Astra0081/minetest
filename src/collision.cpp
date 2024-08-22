@@ -465,7 +465,7 @@ collisionMoveResult collisionMoveSimple(Environment *env, IGameDef *gamedef,
 		if (nearest_collided != COLLISION_AXIS_Y) {
 			aabb3f stepbox = movingbox;
 			// Look slightly ahead  for checking the height when stepping
-			float extra_dtime = nearest_dtime + 0.1 * fabs(dtime - nearest_dtime);
+			float extra_dtime = nearest_dtime + 0.1f * fabs(dtime - nearest_dtime);
 			stepbox.MinEdge.X += aspeed_f.X * extra_dtime;
 			stepbox.MinEdge.Z += aspeed_f.Z * extra_dtime;
 			stepbox.MaxEdge.X += aspeed_f.X * extra_dtime;
