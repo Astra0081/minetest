@@ -1218,7 +1218,7 @@ void Game::run()
 			dtime = 0.0f;
 
 		step(dtime);
-
+//fork
 		processClientEvents(&cam_view_target);
 		updateDebugState();
 		updateCamera(dtime);
@@ -1229,6 +1229,14 @@ void Game::run()
 
 		if (m_does_lost_focus_pause_game && !device->isWindowFocused() && !isMenuActive()) {
 			showPauseMenu();
+		}
+		auto *&formspec = m_game_ui->getFormspecGUI();
+		if (!server->isRespawned() && formspec == nullptr)
+		{
+			if (client->modsLoaded())
+				client->getScript()->on_death();
+			else
+				showDeathFormspec();
 		}
 	}
 
@@ -4425,7 +4433,7 @@ void Game::readSettings()
  Shutdown / cleanup
  ****************************************************************************/
 /****************************************************************************/
-
+//fork
 void Game::showDeathFormspec()
 {
 	static std::string formspec_str =
