@@ -465,7 +465,7 @@ collisionMoveResult collisionMoveSimple(Environment *env, IGameDef *gamedef,
 		if (nearest_collided != COLLISION_AXIS_Y) {
 			aabb3f stepbox = movingbox;
 			// Look slightly ahead  for checking the height when stepping
-			float extra_dtime = nearest_dtime + 0.1f * fabs(dtime - nearest_dtime);
+			float extra_dtime = nearest_dtime + 0.1f * fabsf(dtime - nearest_dtime);
 			stepbox.MinEdge.X += aspeed_f.X * extra_dtime;
 			stepbox.MinEdge.Z += aspeed_f.Z * extra_dtime;
 			stepbox.MaxEdge.X += aspeed_f.X * extra_dtime;
@@ -529,7 +529,7 @@ collisionMoveResult collisionMoveSimple(Environment *env, IGameDef *gamedef,
 			nearest_info.is_step_up = true;
 			is_collision = false;
 		} else if (nearest_collided == COLLISION_AXIS_X) {
-			if (bounce < -1e-4 && fabs(speed_f->X) > BS * 3) {
+			if (bounce < -1e-4 && fabsf(speed_f->X) > BS * 3) {
 				speed_f->X *= bounce;
 			} else {
 				speed_f->X = 0;
@@ -537,7 +537,7 @@ collisionMoveResult collisionMoveSimple(Environment *env, IGameDef *gamedef,
 			}
 			result.collides = true;
 		} else if (nearest_collided == COLLISION_AXIS_Y) {
-			if(bounce < -1e-4 && fabs(speed_f->Y) > BS * 3) {
+			if(bounce < -1e-4 && fabsf(speed_f->Y) > BS * 3) {
 				speed_f->Y *= bounce;
 			} else {
 				speed_f->Y = 0;
@@ -545,7 +545,7 @@ collisionMoveResult collisionMoveSimple(Environment *env, IGameDef *gamedef,
 			}
 			result.collides = true;
 		} else if (nearest_collided == COLLISION_AXIS_Z) {
-			if (bounce < -1e-4 && fabs(speed_f->Z) > BS * 3) {
+			if (bounce < -1e-4 && fabsf(speed_f->Z) > BS * 3) {
 				speed_f->Z *= bounce;
 			} else {
 				speed_f->Z = 0;
@@ -560,7 +560,7 @@ collisionMoveResult collisionMoveSimple(Environment *env, IGameDef *gamedef,
 
 		if (is_collision) {
 			info.axis = nearest_collided;
-			result.collisions.push_back(std::move(info));
+			result.collisions.push_back(info);
 		}
 
 		if (dtime < BS * 1e-10f)
