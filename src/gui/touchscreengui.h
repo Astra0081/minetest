@@ -34,6 +34,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "itemdef.h"
 #include "client/game.h"
+#include "client/keycode.h"
 
 using namespace irr;
 using namespace irr::core;
@@ -112,7 +113,7 @@ enum touch_gui_button_id
 struct button_info
 {
 	float repeat_counter;
-	EKEY_CODE keycode;
+	KeyPress keypress;
 	std::vector<size_t> pointer_ids;
 	std::shared_ptr<IGUIImage> gui_button = nullptr;
 
