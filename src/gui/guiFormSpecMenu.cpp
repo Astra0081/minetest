@@ -1046,6 +1046,59 @@ void GUIFormSpecMenu::parseButton(parserData* data, const std::string &element)
 
 	m_fields.push_back(spec);
 }
+void GUIFormSpecMenu::parseOutline(parserData* data, const std::string &element)
+{
+    std::vector<std::string> parts = split(element, ';');
+
+    // Validate parts size and formspec version
+    if ((parts.size() == 3) ||
+        ((parts.size() > 3) && (m_formspec_version > FORMSPEC_API_VERSION)))
+    {
+        std::vector<std::string> v_pos = split(parts[0], ',');
+        std::vector<std::string> v_geom = split(parts[1], ',');
+
+        MY_CHECKPOS("outline", 0);
+        MY_CHECKGEOM("outline", 1);
+
+        v2s32 pos;
+        v2s32 geom;
+
+        // Handle real coordinates if applicable
+        if (data->real_coordinates) {
+            pos = getRealCoordinateBasePos(v_pos);
+            geom = getRealCoordinateGeometry(v_geom);
+        } else {
+            pos = getElementBasePos(&v_pos);
+            geom.X = stof(v_geom[0]) * spacing.X;
+            geom.Y = stof(v_geom[1]) * spacing.Y;
+        }
+
+        video::SColor outline_color;
+        parseColorString(parts[2], outline_color, true, 0xFF);
+
+        core::rect<s32> rect(pos, pos + geom);
+
+		FieldSpec spec(
+			"",
+			L"",
+			L"",
+			258 + m_fields.size(),
+			-2
+		);
+		spec.ftype = f_outline;
+
+
+        GUIOutline *e = new GUIOutline(
+            Environment, data->current_parent, spec.fid, rect, outline_color);
+        e->drop();
+
+        m_fields.push_back(spec);
+        return;
+    }
+	
+
+}
+
 
 bool GUIFormSpecMenu::parseMiddleRect(const std::string &value, core::rect<s32> *parsed_rect)
 {
