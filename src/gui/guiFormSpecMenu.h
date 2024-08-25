@@ -56,7 +56,8 @@ enum FormspecFieldType {
 	f_ItemImage,
 	f_HyperText,
 	f_AnimatedImage,
-	f_Unknown
+	f_Unknown,
+	f_outline
 };
 
 enum FormspecQuitMode {
@@ -492,6 +493,7 @@ private:
 	bool parsePaddingDirect(parserData *data, const std::string &element);
 	void parsePadding(parserData *data, const std::string &element);
 	void parseStyle(parserData *data, const std::string &element);
+	void parseOutline(parserData* data, const std::string &element);
 	void parseSetFocus(parserData *, const std::string &element);
 	void parseModel(parserData *data, const std::string &element);
 
